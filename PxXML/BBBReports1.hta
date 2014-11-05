@@ -1,0 +1,36 @@
+<HTML>
+<HEAD>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1251">
+<TITLE>Список отчетов БрокБизнесБанка</TITLE>
+<style>
+  blockquote {margin-left: 15px; 
+              border-top: 1px solid black;
+              border-bottom: 1px solid black;
+              background-color: white}
+</style>
+<SCRIPT>
+<!--
+function transformIt() {
+    // Associate the result tree object with any element(s) whose
+    // id attribute is "transformedXML."
+    var objResTree = document.all['transformedXML'];
+    // Declare two new MSXML DOMDocument objects.
+    var objSrcTree = new ActiveXObject('MSXML2.DOMDocument.3.0');
+    var objXSLT = new ActiveXObject('MSXML2.DOMDocument.3.0');
+    // Load the two DOMDocuments with the XML document and the
+    // XSLT style sheet.
+    objSrcTree.load('xml\\msg_bbbReports.xml');
+    objXSLT.load('xsl\\bbbreports.xsl');
+    // Use the transformNode method to apply the XSLT to the XML.
+    strResult = objSrcTree.transformNode(objXSLT);
+    // Assign the resulting string to the result tree object's
+    // innerHTML property.
+    objResTree.innerHTML = strResult;
+    return true;
+    }
+-->
+</SCRIPT>
+<BODY onload='transformIt()'>
+<DIV id='transformedXML'></DIV>
+</BODY>
+</HTML>

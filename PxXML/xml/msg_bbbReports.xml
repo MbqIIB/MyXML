@@ -1,0 +1,1605 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<root>
+  <signature name="pxbank reports group"/>
+  <report name="msg_kd_port" comment="Депозитный портфель БББ" language="JScript">
+    <classes>
+      <class name="bos32"/>
+      <class name="px_pay32"/>
+    </classes>
+    <body>/*
+--&gt;
+Депозитный портфель БрокБизнесБанка.&lt;br/&gt;&lt;br/&gt;
+
+Строит депозитный портфель по счетам 2630, 2635 с выводом данных в Ексель.&lt;br/&gt;
+В качестве шаблона используется файл otchet.xls из каталога pattern.
+Отчет использует ряд функций из отчета &lt;b&gt;"Библиотека функций БрокБизнесБанка"&lt;/b&gt;
+&lt;!--
+*/
+#include &lt;msg_bbbLib&gt;
+
+// -----------------------------------------------------------------------------
+// --                    Кредитно/депозитный портфель                         --
+// -----------------------------------------------------------------------------
+
+Dlg = HostApp.NewDialog();
+var path2xls=GetPath2RPT()+"\\pattern\\otchet.xls";
+
+DEBUG = true;
+
+// Начальная инициализация значений параметров для отчета...
+if (HostApp.StoredValue("DtRaschet").vType == 0)       HostApp.StoredValue("DtRaschet").Value       = BANKDAY.Value;
+
+Dlg.NewField   ('DtRaschet',  'дата',                  HostApp.StoredValue("DtRaschet").Value );
+
+if (Dlg.ShowModal())
+{
+ // Сохраним параметры...
+ HostApp.StoredValue("DtRaschet").Value = Dlg.DtRaschet;
+
+ main (Dlg);
+}
+
+function main (D1)
+{
+  var SQLCmd, SQLErr;
+  var AccDebCode="'2630', '2635'";
+  var c_cnt = "";
+  var f;
+  var RepDt, sqlDate;
+  var rptDt;
+  var XlApp, wBook;
+  var xlRight=-4152;
+
+  RepDt = new Date (D1.DtRaschet);
+  sqlDate = mdy ( new Date (D1.DtRaschet) );
+  rptDt = RepDt;
+
+  // Значения доп. параметров на нужную дату ...
+  GDB.ExecSQL("DROP TABLE tmp_addprm");
+
+  SQLCmd =
+  "CREATE TEMP TABLE tmp_addprm(     "+"\r\n"+
+  "  paramcode      VARCHAR (20, 0), "+"\r\n"+
+  "  PRIMARY KEY    (paramcode)      "+"\r\n"+
+  ") WITH NO LOG";
+  RunSQL (SQLCmd, true);
+
+  RunSQL ("INSERT INTO tmp_addprm (paramcode) VALUES ('S040')", true);
+  RunSQL ("INSERT INTO tmp_addprm (paramcode) VALUES ('S050')", true);
+  RunSQL ("INSERT INTO tmp_addprm (paramcode) VALUES ('NDOG')", true);
+  RunSQL ("INSERT INTO tmp_addprm (paramcode) VALUES ('T090')", true);
+  RunSQL ("INSERT INTO tmp_addprm (paramcode) VALUES ('N-Prod')", true);
+
+  // Таблица с Идентификаторами счетов, по которым нужна информация о доп. параметрах...
+  GDB.ExecSQL("DROP TABLE tmp_idlst");
+
+  SQLCmd =
+  "CREATE TEMP TABLE tmp_idlst (        "+"\r\n"+
+  " class          CHAR (01),           "+"\r\n"+
+  " object_id      INTEGER,             "+"\r\n"+
+  " PRIMARY KEY    (class, object_id)   "+"\r\n"+
+  ") WITH NO LOG";
+  RunSQL (SQLCmd, true);
+
+  // Таблица с результатами...
+  GDB.ExecSQL("DROP TABLE tmp_kredport");
+
+  SQLCmd =
+    "CREATE TEMP TABLE tmp_kredport(                                   "+"\r\n" +
+    "  code         CHAR (06),         {балансовый счет}               "+"\r\n"+
+    "  acc          CHAR (17),         {кредитный - депозитный счет}   "+"\r\n" +
+    "  idacc        INTEGER NOT NULL,  {id аналитического счета}       "+"\r\n" +
+    "  c_cnt        INTEGER,           {тип счета}                     "+"\r\n" +
+    "  currency     INTEGER NOT NULL,  {ваюта счета}                   "+"\r\n" +
+    "  saldo        MONEY (20, 2),     {остаток по счету в валюте}     "+"\r\n" +
+    "  saldouah     MONEY (20, 2),     {остаток по счету в эквиваленте}"+"\r\n" +
+    "  full_name    CHAR (200),        {полное наименование клиента}   "+"\r\n" +
+    "  intcode      INTEGER,           {код клиента}                   "+"\r\n" +
+    "  s040         DATE,              {дата выдачи кредита - депозита}"+"\r\n" +
+    "  s050         DATE,              {дата возврата}                 "+"\r\n" +
+    "  NDOG         varchar(100),      {процентная ставка}             "+"\r\n" +
+    "  t090         MONEY (20,2),      {процентная ставка}             "+"\r\n" +
+    "  codeokpo     char(14)                                           "+"\r\n" +
+    ") WITH NO LOG\r\n";
+  RunSQL (SQLCmd, true);
+
+  c_cnt = AccDebCode;
+
+  f = 1;
+
+  // Значения дополнительный параметров на дату ...
+  SQLCmd =
+    "INSERT INTO tmp_idlst (class, object_id)            "+"\r\n"+
+    "SELECT DISTINCT 'A' AS class, a0.idacc AS object_id  "+"\r\n"+
+    "  from payservice ps, accountservice s,             "+"\r\n"+
+    "       vaccount a0                                   "+"\r\n"+
+    " where ps.type='A'                                  "+"\r\n"+
+    "   and s.idpayservice=ps.idpayservice               "+"\r\n"+
+    "   and a0.idacc=s.idacc and a0.status!='C'          "+"\r\n"+
+    "   and a0.acc[1, 4] in ("+AccDebCode+             ")"+"\r\n"+
+    "   and a0.idacc not in (select object_id            "+"\r\n"+
+    "                          from tmp_idlst)           "+"\r\n"+
+    "";
+  RunSQL (SQLCmd, true);
+
+  SQLCmd =
+    "INSERT INTO tmp_idlst (class, object_id)            "+"\r\n"+
+    "SELECT DISTINCT 'A' AS class, a0.idacc AS object_id  "+"\r\n"+
+    "  from payservice ps, accountservice s,             "+"\r\n"+
+    "       vaccount a0                                   "+"\r\n"+
+    " where ps.type='A'                                  "+"\r\n"+
+    "   and s.idpayservice=ps.idpayservice               "+"\r\n"+
+    "   and a0.idacc=s.idacc and a0.status='C'           "+"\r\n"+
+    "   and a0.acc[1, 4] in ("+AccDebCode+             ")"+"\r\n"+
+    "   and a0.idacc not in (select object_id            "+"\r\n"+
+    "                          from tmp_idlst)           "+"\r\n"+
+    "   and a0.idacc in (select idacc from accdate       "+"\r\n"+
+    "                     where accdt&gt;"+sqlDate+")       "+"\r\n"+
+    "";
+  RunSQL (SQLCmd, true);
+
+  SQLCmd =
+      "INSERT INTO tmp_idlst (class, object_id)            "+"\r\n"+
+      "SELECT DISTINCT 'A' AS class, a1.idacc AS object_id  "+"\r\n"+
+      "  from payservice ps, accountservice s,             "+"\r\n"+
+      "       vaccount a1                                   "+"\r\n"+
+      " where ps.type='A'                                  "+"\r\n"+
+      "   and s.idpayservice=ps.idpayservice               "+"\r\n"+
+      "   and a1.idacc=s.debitacc                          "+"\r\n"+
+      "   and a1.idacc not in (select object_id            "+"\r\n"+
+      "                          from tmp_idlst)           "+"\r\n"+
+      "";
+  RunSQL (SQLCmd, true);
+
+  SQLCmd =
+      "INSERT INTO tmp_idlst (class, object_id)            "+"\r\n"+
+      "SELECT DISTINCT 'A' AS class, a2.idacc AS object_id  "+"\r\n"+
+      "  from payservice ps, accountservice s,             "+"\r\n"+
+      "       vaccount a2                                   "+"\r\n"+
+      " where ps.type='A'                                  "+"\r\n"+
+      "   and s.idpayservice=ps.idpayservice               "+"\r\n"+
+      "   and a2.idacc=s.tempoacc                          "+"\r\n"+
+      "   and a2.idacc not in (select object_id            "+"\r\n"+
+      "                          from tmp_idlst)           "+"\r\n"+
+      "";
+  RunSQL (SQLCmd, true);
+
+  SQLCmd = "delete from tmp_idlst                            "+"\r\n"+
+             " where object_id in (select idacc from accdate   "+"\r\n"+
+    "                               where status='C'           "+"\r\n"+
+    "                                 and accdt&lt;="+sqlDate+")"+"\r\n"+
+    "";
+  RunSQL (SQLCmd, true);
+
+  SQLCmd = "EXECUTE PROCEDURE getaddparam ( pDtAction = " + sqlDate + ")";
+  RunSQL (SQLCmd, true);
+
+  RunSQL ("drop table idacclist", false);
+  SQLCmd = "select object_id as idacc from tmp_idlst           "+"\r\n"+
+             "into temp idacclist with no log";
+  RunSQL (SQLCmd, true);
+
+  GDB.SetRoleName("rptrol02");
+  SQLCmd = "EXECUTE PROCEDURE makeextract ("+sqlDate+", "+sqlDate+", 1)";
+  RunSQL (SQLCmd, true);
+
+  SQLCmd =
+      "INSERT INTO tmp_kredport (code, acc, idacc, c_cnt, currency,                      "+"\r\n"+
+      "       saldo, saldouah, full_name, intcode, codeokpo,                             "+"\r\n"+
+      "       s040, s050, NDOG, t090)                                                    "+"\r\n"+
+      "SELECT b.code, a.acc, a.idacc, a.c_cnt, am.currency,                              "+"\r\n"+
+      "       (case when am.oactive&gt;0 then am.oactive else am.opassive end) AS saldo,    "+"\r\n"+
+      "       (case when au.oactive&gt;0 then au.oactive else au.opassive end) AS saldouah, "+"\r\n"+
+      "       ae.full_name, ae.intcode, c.codeokpo,                                      "+"\r\n"+
+      "       YMDTODATE(s040.data), YMDTODATE(s050.data),                                "+"\r\n"+
+      "       NDOG.data, trim(t090.data)                                                 "+"\r\n"+
+      "  FROM vaccount a,                                                                "+"\r\n"+
+      "       customer c,                                                                "+"\r\n"+
+      "       acctree b,                                                                 "+"\r\n"+
+      "       endsaldo am,                                                               "+"\r\n"+
+      "       endsaldo au,                                                               "+"\r\n"+
+      "       customer ae,                                                               "+"\r\n"+
+      "       outer tmp_addprmresult s040,                                               "+"\r\n"+
+      "       outer tmp_addprmresult s050,                                               "+"\r\n"+
+      "       outer tmp_addprmresult NDOG,                                               "+"\r\n"+
+      "       outer tmp_addprmresult t090                                                "+"\r\n"+
+      " WHERE a.idacc IN (select object_id from tmp_idlst)                               "+"\r\n"+
+      "   AND a.idacc = am.idacc                                                         "+"\r\n"+
+      "   AND c.idcustomer = a.idcustomer                                                "+"\r\n"+
+      "   AND a.currency = am.currency                                                   "+"\r\n"+
+      "   AND au.currency = 980                                                          "+"\r\n"+
+      "   AND am.idacc = au.idacc                                                        "+"\r\n"+
+      "   AND a.idcustomer = ae.idcustomer                                               "+"\r\n"+
+      "   AND a.newidaccii = b.idaccii                                                   "+"\r\n"+
+      "   AND s040.paramcode = 'S040' and s040.object_id = a.idacc                       "+"\r\n"+
+      "   AND s050.paramcode = 'S050' and s050.object_id = a.idacc                       "+"\r\n"+
+      "   AND NDOG.paramcode = 'NDOG' and NDOG.object_id = a.idacc                       "+"\r\n"+
+      "   AND t090.paramcode = 'T090' and t090.object_id = a.idacc                       "+"\r\n"+
+      "";
+  RunSQL (SQLCmd, true);
+
+  rptDt = RepDt;
+
+  // Удалим из таблицы tmp_kredport записи с сальдо=0
+  SQLCmd="drop table tmp_tempoacc";
+  RunSQL (SQLCmd, false);
+
+  SQLCmd = "select s.idacc FROM tmp_kredport a, accountservice s"+
+           " WHERE a.idacc=s.tempoacc and a.saldo&gt;0         "+
+           "into temp tmp_tempoacc with no log"
+  RunSQL (SQLCmd, true);
+
+  SQLCmd = "DELETE FROM tmp_kredport "+
+           " WHERE saldo = 0 and acc[1, 4] in ("+AccDebCode+")"+
+           "   and not idacc in (select idacc from tmp_tempoacc)";
+  RunSQL (SQLCmd, true);
+
+  // Результаты работы...
+  if (DEBUG)
+  {
+    //HostApp.CreateGridForm("SELECT * FROM tmp_idlst").ShowModal();
+    //HostApp.CreateGridForm("SELECT * FROM tmp_addprmresult").ShowModal();
+
+
+    SQL="select a0.*, a2.acc peracc, a2.saldo mper,          "+"\r\n"+
+        "       a2.saldouah mperuah, a1.acc outgoacc,        "+"\r\n"+
+        "       ps.name psname, nProd.data NProd,            "+"\r\n"+
+        "       ps.code paycode                              "+"\r\n"+
+        "  from payservice ps, accountservice s,             "+"\r\n"+
+        "       tmp_kredport a0, outer vaccount a1,          "+"\r\n"+
+        "       outer tmp_addprmresult NProd,                "+"\r\n"+
+        "       outer tmp_kredport a2                        "+"\r\n"+
+        " where ps.type='A'                                  "+"\r\n"+
+        "   and s.idpayservice=ps.idpayservice               "+"\r\n"+
+        "   and a0.idacc=s.idacc                             "+"\r\n"+
+        "   and a0.acc[1, 4] in ("+AccDebCode+")             "+"\r\n"+
+        "   and a1.idacc=s.debitacc                          "+"\r\n"+
+        "   and NProd.paramcode = 'N-Prod'                   "+"\r\n"+
+        "   and nProd.object_id = s.idacc                    "+"\r\n"+
+        "   and a2.idacc=s.tempoacc                          "+"\r\n"+
+        "";
+
+//    GRD=HostApp.CreateGridForm(SQL).ShowModal();
+    GRD=GDB.CreateCursor(SQL);
+
+    XlApp=new ActiveXObject("Excel.Application");
+    XlApp.Visible=true;
+
+    wBook=XlApp.Workbooks.Add(path2xls);
+
+    XlApp.Cells(2, 4).Select();
+    tStr=formatDate(rptDt, "dmY.")
+    XlApp.Selection.Value=tStr;
+
+    XlApp.Cells(4, 1).Select();
+    while(!GRD.EOF) {
+      XlApp.Cells((XlApp.Selection.Row+1), 1).Select();
+      XlApp.Selection.NumberFormat="@"
+      XlApp.Selection.FormulaR1C1=GRD.FieldByName("full_name").Value
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.Selection.NumberFormat="@"
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("codeokpo").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.Selection.NumberFormat="@"
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("acc").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("currency").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.Selection.NumberFormat="@"
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("NDOG").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("s040").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("s050").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.Selection.NumberFormat = "0"
+      XlApp.ActiveCell.FormulaR1C1 = "=RC[-1]-RC[-2]"
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("saldo").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("saldouah").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("t090").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.Selection.NumberFormat="@"
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("peracc").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("mper").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("mperuah").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.Selection.NumberFormat="@"
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("outgoacc").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.Selection.NumberFormat="@"
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("paycode").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.Selection.NumberFormat="@"
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("psname").Value;
+
+      XlApp.Cells(XlApp.Selection.Row, (XlApp.Selection.Column+1)).Select();
+      XlApp.Selection.HorizontalAlignment = xlRight
+      XlApp.Selection.NumberFormat="@"
+      XlApp.ActiveCell.FormulaR1C1=GRD.FieldByName("NProd").Value;
+
+      GRD.Next();
+    }
+    //ShowModal();
+
+  }
+
+  // -----------------
+  // Prepare Report...
+  // -----------------
+  //Rep=Crp.CreateReport("kd_port.rpt");
+  //Rep.SetParam('DtRaschet',rptDt.getVarDate());
+  //Rep.SetParam('cnt','6');
+  //Rep.SetParam('f',f);
+  //Rep.Preview();
+
+  GDB.ExecSQL("DROP TABLE tmp_kredport");
+  GDB.ExecSQL("DROP TABLE tmp_idlst");
+  GDB.ExecSQL("DROP TABLE tmp_addprm");
+
+  return true;
+}
+
+</body>
+    <groups/>
+  </report>
+  <report name="msg_bbbLib" comment="Библиотека функций БрокБизнесБанка" language="JScript">
+    <classes/>
+    <body>/*
+--&gt;
+Содержит набор часто используемых функций и переменных. &lt;br/&gt;
+
+Объявленны следующие переменные:&lt;br/&gt;
+&amp;#8194 GDB=HostApp.GeneralDataBase&lt;br/&gt;
+&amp;#8194 GRD - если отчет будет вызван из грида, то переменной будет присвоенно
+значение Grid, в противоположном случае переменной присваивается значение
+пусто.&lt;br/&gt;&lt;br/&gt;
+
+Объявленные функции:&lt;br/&gt;
+&amp;#8194 &lt;b&gt;formatDate(iDt, iFStr)&lt;/b&gt; - Возвращает строку дады указанного формата&lt;br/&gt;
+&amp;#8194 iDt - дата&lt;br/&gt;
+&amp;#8194 iFStr - формат даты. Строится по следующим правилам:&lt;br/&gt;
+&amp;#8194 &lt;b&gt;M&lt;/b&gt; - месяц&lt;br/&gt;
+&amp;#8194 &lt;b&gt;D&lt;/b&gt; - день&lt;br/&gt;
+&amp;#8194 &lt;b&gt;Y&lt;/b&gt; - год&lt;br/&gt;
+&amp;#8194 четвертый символ в строке формата используется в качестве разделителя.&lt;br/&gt;
+&amp;#8194 Пример формата даты 12.31.2008: "MDY/" преобразует дату в строку 12/31/2008
+&lt;br/&gt;&lt;br/&gt;
+&amp;#8194 &lt;b&gt;RunSQL(cSQLCmd, isBreak)&lt;/b&gt; - виполняет SQL запрос без создания курсора&lt;/br&gt;
+&amp;#8194 cSQLCmd - SQL-запрос&lt;/br&gt;
+&amp;#8194 isBreak - признак отображения ошибки (если false, то возникшие при виполнении
+запроса ошибки будут игнорироваться)
+&lt;br/&gt;&lt;br/&gt;
+&amp;#8194 &lt;b&gt;mdy(dt)&lt;/b&gt; - преодразовывает дату в строку mdy(d, m, yyyy) &lt;br/&gt;
+
+&lt;!--
+*/
+var GDB=HostApp.GeneralDataBase;
+var GRD;
+
+try {
+  GRD=Grid;
+} catch(e) {
+  GRD="";
+}
+
+function formatDate(iDt, iFStr) {
+  var i;
+  var tStr, vDelim="", vResult=""
+  var vFStr=(new String(iFStr));
+
+  for(i=0;i&lt;vFStr.length-1;i++) {
+    switch(vFStr.charAt(i)) {
+      case "d":
+        vResult+=(vDelim+
+                 ((new String(iDt.getDate()).length==1) ?  "0" : "")+
+                  iDt.getDate()); 
+        break;
+      case "m":
+        vResult+=(vDelim+
+                 ((new String(iDt.getMonth()+1).length==1) ?  "0" : "")+
+                 (iDt.getMonth()+1)); 
+        break;
+      case "y":
+        vResult+=(vDelim+iDt.getYear()); 
+        break;
+      case "Y":
+        vResult+=(vDelim+iDt.getFullYear()); 
+        break;
+    }
+    vDelim=vFStr.charAt(vFStr.length - 1)
+  }
+    return (vResult);
+}
+
+function RunSQL(cSQLCmd, isBreak)
+{
+  var retvar = true;
+  var lIsBreak = false;
+
+  if (typeof(isBreak) != "boolean" || isBreak == null)
+  {
+  } else {
+    lIsBreak = isBreak;
+  }
+
+  cError = GDB.ExecSQL(cSQLCmd);
+  if ( cError.length &gt; 0 )
+  {
+    retvar = false;
+    if (lIsBreak)
+    {
+     HostApp.RaiseException(cError + "\r\n" + cSQLCmd);
+    }
+  }
+  return retvar;
+}
+
+function mdy (dt)
+{
+ return "MDY ("+formatDate(dt, "mdY,")+ ")";
+}
+
+function grdGetSelected(SQL) {
+/*
+--&gt;&lt;br/&gt;&lt;br/&gt;
+&amp;#8194 &lt;b&gt;grdGetSelected(SQL)&lt;/b&gt; - для строк на гриде выполняет
+&amp;#8194 указанную SQL реплику. Если на гриде нет отмеченных записей, то пользователю
+&amp;#8194 выдается запрос "Выбрать все записи?" и в зависемости от выбора
+&amp;#8194 реплика выполняется либо для всех записей, либо для текущей.
+&lt;!--
+*/
+
+     if(GRD.Selected==0)
+       switch(HostApp.MsgBoxExt(3,"Выбрать все записи?",11)) {
+       case 6:
+         GRD.DataSet.ForEachSQL(SQL) ;
+       break;
+       case 7:
+         GRD.ForEachSQL(SQL);
+       break;
+       case 2:
+       return false;
+       } // end switch
+     else GRD.ForEachSQL(SQL);
+
+     return true;
+}
+
+function GetPath2RPT() {
+/*
+--&gt;&lt;br/&gt;&lt;br/&gt;
+&amp;#8194 &lt;b&gt;GetPath2RPT()&lt;/b&gt; - возвращает путь к каталогу reports
+&lt;!--
+*/
+  var WshShell=new ActiveXObject("WScript.Shell");
+  var bKey=WshShell.RegRead ("HKCU\\Software\\ProFIX\\Common\\CRPE\\Path\\ReportsDir");
+  WshShell="";
+
+  return bKey.replace(/\\$/, "");
+}
+
+function GetPath2Temp() {
+/*
+--&gt;&lt;br/&gt;&lt;br/&gt;
+&amp;#8194 &lt;b&gt;GetPath2Temp()&lt;/b&gt; - возвращает путь к Temp каталогу
+&lt;!--
+*/
+  var WshShell=new ActiveXObject("WScript.Shell");
+  var bKey=WshShell.RegRead ("HKCU\\Software\\ProFIX\\Common\\CRPE\\Path\\OutDir");
+  WshShell="";
+
+  return bKey.replace(/\\$/, "");
+}
+
+</body>
+    <groups/>
+  </report>
+  <report name="msg_saldo_bars2_1" comment="Обор.-сальд ведомость с наименов. по маске" language="JScript">
+    <classes>
+      <class name="bos32"/>
+    </classes>
+    <body>/*
+--&gt;
+Оборотно-сальдовая ведомость по маске счетов.&lt;br/&gt;&lt;br/&gt;
+
+Выбирает счета согласно определенной маске по указанной валюте.
+Валюта ноль (0) означает, что в отчет необходимо выбрать счета по всем валютам.
+
+Отчет использует ряд функций из отчета &lt;b&gt;"Библиотека функций БрокБизнесБанка"&lt;/b&gt;.
+Для печати отчета используется файл &lt;b&gt;sld_barMsg.rpt&lt;/b&gt;.
+&lt;!--
+*/
+#include &lt;msg_bbbLib&gt;
+var MainErr;
+
+function main (){
+  var SQL, tmpStr;
+  var sDtBegin, sDtEnd;
+  var vCurrency="", vAccMask=""; vNewName="";
+  var Dlg = HostApp.NewDialog();
+  var Run_CRPE;
+
+  Dlg.NewField("DtBegin", "Дата с", BANKDAY.Value);
+  Dlg.NewField("DtEnd", "по", BANKDAY.Value);
+  Dlg.NewField("AccMask", "Маска счетов", "*");
+  Dlg.NewField("Currency", "Валюта", 980);
+  Dlg.NewField("IsZero", "Выводить нулевые остатки", false);
+  Dlg.NewField("NChange", "Заменить назв. счета", false);
+  Dlg.NewField("NewAccName", "Общее название физ. счетов", "Рахунок фіз. особи");
+
+  if (!Dlg.ShowModal())
+    return "Выполнение отчета прервано"
+
+  if (Dlg.NChange) {
+    vNewName=Dlg.NewAccName;
+  }
+  sDtBegin=mdy(new Date(Dlg.DtBegin));
+  sDtEnd=mdy(new Date(Dlg.DtEnd));
+
+//  if(Dlg.Currency&gt;0)
+  vCurrency=" and currency="+Dlg.Currency+" \n";
+
+  tmpStr=new String(Dlg.AccMask);
+  if(tmpStr.length&gt;0) {
+    vAccMask=" and acc matches '"+Dlg.AccMask;
+
+    if(tmpStr.search(/\*/g)==-1)
+      vAccMask+="*' \n"
+    else
+      vAccMask+="' \n"
+  }
+
+  RunSQL ("drop table idacclist", false);
+  SQL="create temp table idacclist ( "+"\n"+
+      "  idacc integer,              "+"\n"+
+      "  code  varchar(4)            "+"\n"+
+      ") with no log";
+  RunSQL (SQL, true);
+
+  SQL = "insert into idacclist (idacc, code)             "+"\n"+
+        "select a.idacc, a.acc[1, 4] code                "+"\n"+
+        "  from vaccount a                               "+"\n"+
+        "where idacc in (select idacc from accdate       "+"\n"+
+        "                 where status='O'               "+"\n"+
+        "                   and date(accdt)&lt;="+sDtEnd+")       "+"\n"+
+        "  and not idacc in (select idacc from accdate   "+"\n"+
+        "                 where status='C'               "+"\n"+
+        "                   and date(accdt)&lt;="+sDtBegin+")     "+"\n"+
+        vCurrency+vAccMask;
+  RunSQL (SQL, true);
+
+  GDB.SetRoleName("rptrol01");
+  SQL = "EXECUTE PROCEDURE accbalans ("+sDtBegin+", "+sDtEnd+", 'N')";
+  RunSQL (SQL, true);
+
+  if(!Dlg.IsZero) {
+    SQL="delete from tmp_newaccbalans     "+
+        " where nvl(amountin,0)=0         "+
+        "   and nvl(debit,0)=0            "+
+        "   and nvl(credit,0)=0           "+
+        "   and nvl(amountout,0)=0";
+    RunSQL (SQL, true);
+  }
+
+  SQL="SELECT l.code, v.acc, v.currency, c.cstmr_type, tc.debit, tc.credit, "+
+      "       tc.amountout, p.payname"+
+      "  FROM idacclist l, vaccount v, customer c, payname p,"+
+      "       tmp_newaccbalans tc, outer tmp_newaccbalans tn"+
+      "  WHERE v.idacc=l.idacc"+
+      "    and c.idcustomer=v.idcustomer"+
+      "    and p.idpayname=v.idpayname"+
+      "    and tc.idacc=v.idacc"+
+      "    and tc.currency=v.currency"+
+      "    and tn.idacc=v.idacc"+
+      "    and tn.currency=980"+
+      "  ORDER BY l.code ASC";
+//  HostApp.CreateGridForm(SQL).ShowModal();
+
+  Run_CRPE=HostApp.CrystalEngine.CreateReport("sld_barMsg.rpt");
+
+  Run_CRPE.SetParam("mDateBegin", Dlg.DtBegin);
+  Run_CRPE.SetParam("mDateEnd", Dlg.DtEnd);
+  Run_CRPE.SetParam("macc", Dlg.AccMask);
+  Run_CRPE.SetParam("mcurr", Dlg.Currency);
+  Run_CRPE.SetParam("NewName", vNewName);
+
+  Run_CRPE.Preview();
+
+  return "";
+}
+
+MainErr=main()
+if(MainErr.length&gt;0)
+  MsgBox(MainErr);
+</body>
+    <groups/>
+  </report>
+  <report name="msg_saldo_bars2_2" comment="Обор.-сальд ведомость с наименов. по маске (все валюты)" language="JScript">
+    <classes>
+      <class name="bos32"/>
+    </classes>
+    <body>/*
+--&gt;
+Оборотно-сальдовая ведомость по маске счетов.&lt;br/&gt;&lt;br/&gt;
+
+Выбирает счета согласно определенной маске по всем валютам.
+Отчет использует ряд функций из отчета &lt;b&gt;"Библиотека функций БрокБизнесБанка"&lt;/b&gt;.
+Для печати отчета используется файл &lt;b&gt;sld_barCur.rpt&lt;/b&gt;.
+&lt;!--
+*/
+#include &lt;msg_bbbLib&gt;
+var MainErr;
+
+function main (){
+  var SQL, tmpStr;
+  var sDtBegin, sDtEnd;
+  var vCurrency="", vAccMask="", vNewName="";
+  var Dlg = HostApp.NewDialog();
+  var Run_CRPE;
+
+  Dlg.NewField("DtBegin", "Дата с", BANKDAY.Value);
+  Dlg.NewField("DtEnd", "по", BANKDAY.Value);
+  Dlg.NewField("AccMask", "Маска счетов", "*");
+//  Dlg.NewField("Currency", "Валюта", 980);
+  Dlg.NewField("IsZero", "Выводить нулевые остатки", false);
+  Dlg.NewField("NChange", "Заменить назв. счета", false);
+  Dlg.NewField("NewAccName", "Общее название физ. счетов", "Рахунок фіз. особи");
+
+  if (!Dlg.ShowModal())
+    return "Выполнение отчета прервано"
+
+  if (Dlg.NChange) {
+    vNewName=Dlg.NewAccName;
+  }
+  sDtBegin=mdy(new Date(Dlg.DtBegin));
+  sDtEnd=mdy(new Date(Dlg.DtEnd));
+
+//  if(Dlg.Currency&gt;0)
+//  vCurrency=" and currency="+Dlg.Currency+" \n";
+
+  tmpStr=new String(Dlg.AccMask);
+  if(tmpStr.length&gt;0) {
+    vAccMask=" and acc matches '"+Dlg.AccMask;
+
+    if(tmpStr.search(/\*/g)==-1)
+      vAccMask+="*' \n"
+    else
+      vAccMask+="' \n"
+  }
+
+  RunSQL ("drop table idacclist", false);
+  SQL="create temp table idacclist ( "+"\n"+
+      "  idacc integer,              "+"\n"+
+      "  code  varchar(4)            "+"\n"+
+      ") with no log";
+  RunSQL (SQL, true);
+
+  SQL = "insert into idacclist (idacc, code)             "+"\n"+
+        "select a.idacc, a.acc[1, 4] code                "+"\n"+
+        "  from vaccount a                               "+"\n"+
+        "where idacc in (select idacc from accdate       "+"\n"+
+        "                 where status='O'               "+"\n"+
+        "                   and date(accdt)&lt;="+sDtEnd+")       "+"\n"+
+        "  and not idacc in (select idacc from accdate   "+"\n"+
+        "                 where status='C'               "+"\n"+
+        "                   and date(accdt)&lt;="+sDtBegin+")     "+"\n"+
+        vCurrency+vAccMask;
+  RunSQL (SQL, true);
+
+  GDB.SetRoleName("rptrol01");
+  SQL = "EXECUTE PROCEDURE accbalans ("+sDtBegin+", "+sDtEnd+", 'N')";
+  RunSQL (SQL, true);
+
+  if(!Dlg.IsZero) {
+    SQL="delete from tmp_newaccbalans     "+
+        " where nvl(amountin,0)=0         "+
+        "   and nvl(debit,0)=0            "+
+        "   and nvl(credit,0)=0           "+
+        "   and nvl(amountout,0)=0";
+    RunSQL (SQL, true);
+  }
+  Run_CRPE=HostApp.CrystalEngine.CreateReport("sld_barCur.rpt");
+
+  Run_CRPE.SetParam("mDateBegin", Dlg.DtBegin);
+  Run_CRPE.SetParam("mDateEnd", Dlg.DtEnd);
+  Run_CRPE.SetParam("macc", Dlg.AccMask);
+  Run_CRPE.SetParam("mcurr", 0);
+  Run_CRPE.SetParam("NewName", vNewName);
+
+  Run_CRPE.Preview();
+
+  return "";
+}
+
+MainErr=main()
+if(MainErr.length&gt;0)
+  MsgBox(MainErr);
+</body>
+    <groups/>
+  </report>
+  <report name="extcash_solid" comment="Выписка по счету (Плотная печать)" language="JScript">
+    <classes>
+      <class name="accounts"/>
+    </classes>
+    <body>/*
+--&gt;
+Выписка по счету у которой в файле отчета (extcashb2.rpt) уменшены шрифты
+для более плотной печати.
+&lt;!--
+*/
+// -----------------------------------------------------------------------------
+// --      Выписка по счетам за период (документы в состоянии 'G', '+')       --
+// -----------------------------------------------------------------------------
+
+// --------------------------
+
+var mpPath, myGrid5, muserid, fso, SQLCmd, SQLErr;
+var DtBegin, DtEnd, bnkday;
+
+IsDEBUG         = false;
+TemporaryFolder = 2;
+MaxUsersOnDB    = 250;
+
+db     = HostApp.GeneralDataBase;
+Dlg    = HostApp.NewDialog();
+Crp    = HostApp.CrystalEngine;
+fso    = new ActiveXObject("Scripting.FileSystemObject");
+mpPath = fso.GetFolder(fso.GetSpecialFolder(TemporaryFolder));
+
+if (HostApp.StoredValue("begindate").vType==0)       HostApp.StoredValue("begindate").Value       = BANKDAY.Value;
+if (HostApp.StoredValue("enddate").vType==0)         HostApp.StoredValue("enddate").Value         = BANKDAY.Value;
+
+if (HostApp.StoredValue("pPath").vType==0)           HostApp.StoredValue("pPath").Value           = "" + mpPath;
+if (HostApp.StoredValue("bShowPayInfo").vType==0)    HostApp.StoredValue("bShowPayInfo").Value    = false;
+
+
+Dlg.NewField   ("begindate",   "Дата начала периода:", HostApp.StoredValue("begindate").Value);
+Dlg.NewField   ("enddate",     "Дата конца периода: ", HostApp.StoredValue("enddate").Value);
+
+// ---в зависимости от числа заведенных пользователей, формируем соотв. диалог ... ---
+muserid = "Все пользователи"
+if (db.CreateCursor("SELECT COUNT (*) FROM users").Fields(0).Value &lt; MaxUsersOnDB)
+{
+ myGrid5 = db.CreateCursor("SELECT RPAD (iduser, 8) || ' (' || status || ') - ' || nameuser as user, nameuser FROM users ORDER BY nameuser");
+ muserid = muserid + "|";
+ while (!myGrid5.EOF)
+ {
+     muserid = muserid + myGrid5.FieldByName('user').AsString + '|';
+     myGrid5.Next();
+ }
+
+ Dlg.NewFieldCB ("userid",      "Пользователь:       ", muserid);
+} else {
+ Dlg.NewField   ("userid",      "Логин пользователя: ", muserid);
+}
+// -----------------------------------------------------------------------------
+
+Dlg.NewField   ("newpage",          "Выводить каждую выписку с новой страницы", false);
+Dlg.NewField   ("bShowPayInfo",     "Вывод инф. о проведении д-та (время, исполнитель)", HostApp.StoredValue("bShowPayInfo").Value);
+Dlg.NewFieldRG ("pStream",          "Направление печати:", "на экран|в файл (кодовая таблица \"DOS866\")|на принтер");
+Dlg.NewField   ("pPath",            "Путь к выходному файлу (только для режима \"в файл\")", HostApp.StoredValue("pPath").Value);
+
+if (Dlg.ShowModal())
+{
+ // Rонтроль дат ...
+ DtBegin = new Date (Dlg.begindate);
+ DtEnd   = new Date (Dlg.enddate);
+ bnkday  = new Date (BANKDAY.value);
+
+ if (DtBegin.valueOf()   &lt;= DtEnd.valueOf()   &amp;&amp;
+     DtBegin.valueOf()   &lt;= bnkday.valueOf()  &amp;&amp;
+     DtEnd.valueOf()     &lt;= bnkday.valueOf()  &amp;&amp;
+     ((DtBegin.valueOf() == DtEnd.valueOf()   &amp;&amp;
+       DtBegin.valueOf() == bnkday.valueOf()) ||
+      DtEnd.valueOf()    &lt;  bnkday.valueOf())
+    )
+ {
+  // Сохраняем введённые параметры...
+  HostApp.StoredValue("begindate").Value       = Dlg.begindate;
+  HostApp.StoredValue("enddate").Value         = Dlg.enddate;
+  HostApp.StoredValue("bShowPayInfo").Value    = Dlg.bShowPayInfo;
+
+  main (Dlg);
+
+ } else {
+
+  HostApp.MsgBoxExt (1, "Не верно указан период дат (" +
+                        Date2String (new Date (Dlg.begindate)) + " -\&gt; " +
+                        Date2String (new Date (Dlg.enddate)) + ")!\r\n \r\n" +
+                        "Дата начала должна быть не больше даты конца периода.\r\n" +
+                        "Обе даты не должны превышать дату банковского дня.\r\n" +
+                        "Период, охватывающий более одного дня, не может включать текущий банковский день.", 4);
+ }
+
+}
+
+true;
+
+// -----------------------------------------------------------------------------
+function RunSQL(cSQLCmd, isBreak)
+{
+  var retvar = true;
+  var lIsBreak = false;
+
+  if (typeof(isBreak) != "boolean" || isBreak == null)
+  {
+  } else {
+    lIsBreak = isBreak;
+  }
+
+  cError = HostApp.GeneralDataBase.ExecSQL(cSQLCmd);
+  if ( cError.length &gt; 0 )
+  {
+    retvar = false;
+    if (lIsBreak)
+    {
+     HostApp.RaiseException(cError + "\r\n" + cSQLCmd);
+    } else {
+     MsgBox(cError + "\r\n" + cSQLCmd);
+    }
+  }
+  return retvar;
+}
+// -----------------------------------------------------------------------------
+function Date2String (dt)
+{
+ var t_month = dt.getMonth()+1;
+ if (t_month &lt; 10) {t_month = "0" + t_month;} else {t_month = "" + t_month;}
+ return dt.getDate() + "." + t_month + "." + dt.getFullYear();
+}
+// -----------------------------------------------------------------------------
+function ConvertDateToSqlString (dt)
+{
+ return "MDY (" + (dt.getMonth()+1)  + ", " + dt.getDate()  + ", " + dt.getFullYear()  + ")";
+}
+// -----------------------------------------------------------------------------
+function main (D)
+{
+ var begdate = new Date (D.begindate);
+ var enddate = new Date (D.enddate);
+ var bnkday  = new Date (BANKDAY.value);
+ var mpPath, muserid, Rep;
+ var SQLCmd = "", SQLErr = "";
+ // var err_rlarcsee = "";
+
+ // Подготовим временные таблицы для шаблона ...
+ db.ExecSQL("DROP TABLE tmp_user");
+ db.ExecSQL("DROP TABLE ts_cashpayord");
+ db.ExecSQL("DROP TABLE tmp_dataval");
+ db.ExecSQL("DROP TABLE ts_paydate");
+ db.ExecSQL("DROP TABLE idacclist");
+
+ SQLCmd =
+ "CREATE TEMP TABLE tmp_user\r\n" +
+ "(\r\n" +
+ " iduser           CHAR (8),\r\n" +
+ " PRIMARY KEY      (iduser)\r\n" +
+ ") WITH NO LOG";
+ RunSQL (SQLCmd, true);
+
+ SQLCmd =
+ "CREATE TEMP TABLE idacclist\r\n" +
+ "(\r\n" +
+ " idsort           SERIAL,\r\n" +
+ " idacc            INTEGER,\r\n" +
+ " iduser           CHAR (12),\r\n" +
+ " PRIMARY KEY      (idsort)\r\n" +
+ ") WITH NO LOG";
+ RunSQL (SQLCmd, true);
+
+ SQLCmd =
+ "CREATE TEMP TABLE ts_cashpayord\r\n" +
+ "(\r\n" +
+ " idpayord         INTEGER,\r\n" +
+ " symbol           SMALLINT,\r\n" +
+ " amount           MONEY (20, 2)\r\n" +
+ ") WITH NO LOG";
+ RunSQL (SQLCmd, true);
+ RunSQL ("CREATE INDEX ts_cpo1 ON ts_cashpayord (idpayord)", true);
+
+ SQLCmd =
+ "CREATE TEMP TABLE ts_paydate                            -- Технологические даты документов\r\n" +
+ "(\r\n" +
+ " idpayord         INTEGER  NOT NULL,                    -- Идентификатор документа\r\n" +
+ " codedt           SMALLINT NOT NULL,                    -- Код технологической даты\r\n" +
+ " paydt            DATETIME YEAR TO SECOND NOT NULL,     -- Значение даты\r\n" +
+ " iduser           CHAR (8) DEFAULT USER NOT NULL,       -- Исполнитель\r\n" +
+ " PRIMARY KEY      (idpayord, codedt)\r\n" +
+ ") WITH NO LOG";
+ RunSQL (SQLCmd, true);
+ // RunSQL ("CREATE INDEX ts_pd1 ON ts_paydate (iduser)", true);
+
+ // Обработка условий фильтра...
+ if (D.userid == "Все пользователи" || D.userid == "")
+ {
+  muserid = "";
+ } else {
+  muserid = D.userid.substring(0, 8);
+ }
+
+ SQLCmd = "INSERT INTO idacclist (idacc) VALUES (:idacc)"
+ if (Grid.Selected == 0)
+ {
+  switch (HostApp.MsgBoxExt(3, "Сформировать отчет только для выбранной записи ?", 1+256))
+  {
+   case 9:  Grid.DataSet.ForEachSQL(SQLCmd);   break;
+   case 6:  Grid.ForEachSQL(SQLCmd);           break;
+   case 2:  return false;
+  }
+ } else {
+  Grid.ForEachSQL(SQLCmd);
+ }
+
+ if (IsDEBUG) HostApp.CreateGridForm("SELECT * FROM idacclist", false).ShowModal();
+ // ----------------------------------------------------------------------------
+
+ // -------- Выбор списка пользователей -----------
+ SQLCmd = "INSERT INTO tmp_user VALUES ('" + muserid + "')";
+ RunSQL (SQLCmd, true);
+ if (IsDEBUG) HostApp.CreateGridForm("SELECT * FROM tmp_user", false).ShowModal();
+
+ // Сформируем временные таблицы с данными для выписики стандартными процедурами ...
+ SQLErr = db.ExecSQL("SET ROLE 'rptrol02'"); // Роль для формирования выписки
+ if (SQLErr.length &gt; 0)
+ {
+  MsgBoxExt (2, "Для работы отчета пользователю необходимо дать полномочие 'формирование выписки'", 1);
+  return false;
+ }
+
+ // Контроль дат для текущего банковского дня ...
+ if ( begdate.valueOf() == enddate.valueOf() &amp;&amp;
+      begdate.valueOf() == bnkday.valueOf() )
+ {
+  // Текущий банковский день
+  SQLCmd =
+  "EXECUTE PROCEDURE makeextract3 (1)";
+ } else {
+  // За период, который не включает текущий банковский день
+  SQLCmd =
+  "EXECUTE PROCEDURE makeextract (" +
+  ConvertDateToSqlString (begdate) + ", " +
+  ConvertDateToSqlString (enddate) + ", 1)";
+ }
+ RunSQL (SQLCmd);
+
+ if (IsDEBUG) HostApp.CreateGridForm("SELECT * FROM extract", false).ShowModal();
+ // err_rlarcsee = db.ExecSQL("SET ROLE 'rlarcsee'");
+
+ // Заполним данные для кассовых документов...
+ SQLCmd =
+ "INSERT INTO ts_cashpayord (idpayord, symbol, amount)\r\n" +
+ "SELECT DISTINCT c.idpayord, c.simvol, c.amount\r\n" +
+ "  FROM extract e,\r\n" +
+ "       cashpayord c\r\n" +
+ " WHERE e.idpayord = c.idpayord\r\n";
+ RunSQL (SQLCmd, true);
+
+ SQLCmd =
+ "INSERT INTO ts_cashpayord (idpayord, symbol, amount)\r\n" +
+ "SELECT DISTINCT c.idpayord, c.simvol, c.amount\r\n" +
+ "  FROM extract e,\r\n" +
+ "       cashpayordarc c\r\n" +
+ " WHERE e.idpayord = c.idpayord\r\n";
+ RunSQL (SQLCmd, true);
+
+ if (IsDEBUG) HostApp.CreateGridForm("SELECT * FROM ts_cashpayord", false).ShowModal();
+
+ // Данные по датам документов ...
+ SQLCmd =
+ "INSERT INTO ts_paydate (idpayord, codedt, paydt, iduser)\r\n" +
+ "SELECT DISTINCT pd.idpayord, pd.codedt, pd.paydt, pd.iduser\r\n" +
+ "  FROM extract e,\r\n" +
+ "       paydate pd\r\n" +
+ " WHERE pd.idpayord = e.idpayord\r\n" +
+ "";
+ RunSQL (SQLCmd, true);
+
+ SQLCmd =
+ "INSERT INTO ts_paydate (idpayord, codedt, paydt, iduser)\r\n" +
+ "SELECT DISTINCT pda.idpayord, pda.codedt, pda.paydt, pda.iduser\r\n" +
+ "  FROM extract e,\r\n" +
+ "       paydatearc pda\r\n" +
+ " WHERE pda.idpayord = e.idpayord\r\n" +
+ "";
+ RunSQL (SQLCmd, true);
+
+ if (IsDEBUG) HostApp.CreateGridForm("SELECT * FROM ts_paydate", false).ShowModal();
+
+ // Создадим временную табличку куда будем выбирать не разработанные документы с датой валютирования
+ //  codeoper=18 и paramkey='D' и разработанные - возврат клиентам тип(НК)
+
+ SQLCmd =
+ "   SELECT vp.*, va.idacc, YMDTODATE (pp.paramvalue) AS dtval,\r\n" +
+ "          CASE WHEN (p2l.idpayord IS NOT NULL)\r\n" +
+ "               THEN ('O') ELSE ('I')\r\n" +
+ "          END AS stval\r\n" +
+ "     FROM idacclist il,\r\n" +
+ "          vaccount va,\r\n" +
+ "          vpayord vp,\r\n" +
+ "          payordparam pp,\r\n" +
+ "          OUTER (payordlink pl, OUTER vpayord p2l)\r\n" +
+ "    WHERE il.idacc = va.idacc AND\r\n" +
+ "          (va.acc = vp.cacc OR va.idacc = vp.cacclead) AND\r\n" +
+ "          vp.codeoper = 18 AND\r\n" +
+ "          vp.idpayord = pp.idpayord AND pp.paramkey = 'D' AND\r\n" +
+ "          vp.dtend BETWEEN " +
+            ConvertDateToSqlString (begdate) + " AND " +
+            ConvertDateToSqlString (enddate) + " AND\r\n" +
+ "          pl.linktype = 2 AND pl.idmaster = vp.idpayord AND\r\n" +
+ "          pl.idslave = p2l.idpayord AND p2l.codeoper = 10 AND\r\n" +
+ "          p2l.status != 'E'\r\n" +
+ "INTO TEMP tmp_dataval WITH NO LOG";
+ RunSQL (SQLCmd, true);
+
+ if (IsDEBUG) HostApp.CreateGridForm("SELECT * FROM tmp_dataval", false).ShowModal();
+
+ // Обработка параметра "устройство вывода"...
+ switch (D.pStream)
+ {
+  case ("на экран"):
+  {
+   mpPath = "con";
+   break;
+  }
+
+  case ("в файл (кодовая таблица \"DOS866\")"):
+  {
+   // Проверим существование пути к выводимому файлу, при условии, что вывод направлен именно в файл...
+   try
+   {
+    mpPath = fso.GetFolder (D.pPath);
+   } catch(e) {
+    MsgBox ("Путь \"" + D.pPath + "\" не найден!\r\nВывод будет направлен на экран!");
+    mpPath = "con";
+   }
+
+   HostApp.StoredValue("pPath").Value = "" + mpPath; // Сохраняем введённые параметры...
+   break;
+  }
+
+  case ("на принтер"):
+  {
+   mpPath = "prn";
+   break;
+  }
+
+  default:
+  {
+   MsgBox("Unknown error!");
+   mpPath = "con";
+  }
+ }
+
+ // --------- Формируем форму по шаблону ---------------
+ Rep = Crp.CreateReport ("extcashb2.rpt");
+ Rep.SetParam ("bNewPageAfter",   D.newpage);
+ Rep.SetParam ("bShowPayInfo",    D.bShowPayInfo);
+
+ switch (mpPath)
+ {
+  case "con":    Rep.Preview();    break;
+  case "prn":    Rep.Print();      break;
+  case "":                         break;
+  default:       Rep.ExportTo("CP866Text", "" + mpPath + "\\extcash.txt");
+ }
+
+ //  db.ExecSQL("DROP TABLE tmp_user");
+ //  db.ExecSQL("DROP TABLE ts_cashpayord");
+ //  db.ExecSQL("DROP TABLE tmp_dataval");
+ //  db.ExecSQL("DROP TABLE idacclist");
+ //  db.ExecSQL("DROP TABLE ts_paydate");
+
+ return true;
+}
+
+</body>
+    <groups/>
+  </report>
+  <report name="msg_obsal_inout" comment="Оборотно-сальдовая ведомость (вход.-исх.) - 2" language="JScript">
+    <classes>
+      <class name="accounts"/>
+    </classes>
+    <body>/*
+--&gt;
+Оборотно-сальдовая ведомость без итоговых сумм по подгрупам (в RPT-файле итоги скрыты).
+Предназначенна для печати выписок для НБУ. Для печати использует obsal_inout2.rpt файл.
+&lt;!--
+*/
+// -----------------------------------------------------------------------------
+// --                Оборотно-сальдовая ведомость (вход.-исх.)                --
+// -----------------------------------------------------------------------------
+
+GDB = HostApp.GeneralDataBase;
+DLG = HostApp.NewDialog();
+CRP = HostApp.CrystalEngine;
+
+if (HostApp.StoredValue("DtBegin").vType == 0)             HostApp.StoredValue("DtBegin").Value = BANKDAY.Value;
+if (HostApp.StoredValue("DtEnd").vType == 0)               HostApp.StoredValue("DtEnd").Value = BANKDAY.Value;
+
+DLG.NewField ("DtBegin", "Расчет за период с:",            HostApp.StoredValue("DtBegin").Value);
+DLG.NewField ("DtEnd",   "по:",                            HostApp.StoredValue("DtEnd").Value);
+
+if (DLG.ShowModal())
+{
+ // Сохранение введенных значений...
+ HostApp.StoredValue("DtBegin").Value = DLG.DtBegin;
+ HostApp.StoredValue("DtEnd").Value = DLG.DtEnd;
+
+ main(DLG);
+}
+
+true;
+// -----------------------------------------------------------------------------
+function RunSQL(cSQLCmd, isBreak)
+{
+  var retvar = true;
+  var lIsBreak = false;
+
+  if (typeof(isBreak) != "boolean" || isBreak == null)
+  {
+  } else {
+    lIsBreak = isBreak;
+  }
+
+  cError = HostApp.GeneralDataBase.ExecSQL(cSQLCmd);
+  if ( cError.length &gt; 0 )
+  {
+    retvar = false;
+    if (lIsBreak)
+    {
+     HostApp.RaiseException(cError + "\r\n" + cSQLCmd);
+    } else {
+     MsgBox(cError + "\r\n" + cSQLCmd);
+    }
+  }
+  return retvar;
+}
+// -----------------------------------------------------------------------------
+function ConvertDateToSqlString (dt)
+{
+ return "MDY (" + (dt.getMonth()+1)  + ", " + dt.getDate()  + ", " + dt.getFullYear()  + ")";
+}
+// -----------------------------------------------------------------------------
+function main(D)
+{
+  var SQLError, SQLCmd = "";
+  var sDtBegin;
+  var sDtEnd;
+
+  // Временные таблицы ...
+  GDB.ExecSQL("DROP TABLE tmp_idacc");
+  SQLCmd =
+  "CREATE TEMP TABLE tmp_idacc\r\n" +
+  "(\r\n" +
+  " idacc         INTEGER DEFAULT 0 NOT NULL,\r\n" +
+  " PRIMARY KEY   (idacc)\r\n" +
+  ") WITH NO LOG\r\n";
+  RunSQL(SQLCmd, true);
+
+  GDB.ExecSQL("DROP TABLE tmp_oborot");
+  SQLCmd =
+  "CREATE TEMP TABLE tmp_oborot\r\n" +
+  "(\r\n" +
+  " idacc         INTEGER NOT NULL,\r\n" +
+  " currency      SMALLINT,\r\n" +
+  " acc           VARCHAR  (17, 0),\r\n" +
+  " goacc         VARCHAR  (17, 0),\r\n" +
+  " incom         MONEY    (20, 2) DEFAULT 0,\r\n" +
+  " debit         MONEY    (20, 2) DEFAULT 0,\r\n" +
+  " credit        MONEY    (20, 2) DEFAULT 0,\r\n" +
+  " outgo         MONEY    (20, 2) DEFAULT 0,\r\n" +
+  " idcustomer    INTEGER NOT NULL,\r\n" +
+  " full_name     NVARCHAR (254, 0),\r\n" +
+  " PRIMARY KEY   (idacc, currency)\r\n" +
+  ") WITH NO LOG";
+  RunSQL(SQLCmd, true);
+
+  sDtBegin = ConvertDateToSqlString ( new Date (D.DtBegin) );
+  sDtEnd   = ConvertDateToSqlString ( new Date (D.DtEnd) );
+
+  SQLCmd = "INSERT INTO tmp_idacc VALUES (:idacc)";
+  if (Grid.Selected == 0)
+  {
+    switch (HostApp.MsgBoxExt (3, "Выбрать все записи ?", 11))
+    {
+      case 6:       Grid.DataSet.ForEachSQL (SQLCmd);      break;
+      case 7:       Grid.ForEachSQL (SQLCmd);              break;
+      case 2:                                              return;
+    } // end switch
+  } else {
+    Grid.ForEachSQL(SQLCmd);
+  }
+
+  SQLCmd =
+  "INSERT INTO tmp_oborot (idacc, currency, acc, goacc, incom, \r\n" +
+  "                        debit, credit, outgo, idcustomer, full_name)\r\n" +
+  "SELECT a.idacc, a.currency, a.acc, a.goacc,\r\n" +
+  "       sin.incom, 0 AS debit, 0 AS credit,\r\n" +
+  "       CASE WHEN ( " + ConvertDateToSqlString ( new Date (BANKDAY.Value) ) + " = " + sDtEnd + ")\r\n" +
+  "            THEN ( amn.amount - amn.damount + amn.camount )\r\n" +
+  "            ELSE ( sout.incom )\r\n" +
+  "       END AS outgo,\r\n" +
+  "       c.idcustomer, c.full_name\r\n" +
+  "  FROM tmp_idacc t,\r\n" +
+  "       vaccount a,\r\n" +
+  "       customer c,\r\n" +
+  "       saldo sin,\r\n" +
+  "       OUTER saldo sout,\r\n" +
+  "       accmoney amn\r\n" +
+  " WHERE a.idacc = t.idacc\r\n" +
+  "   AND a.idcustomer = c.idcustomer\r\n" +
+  "   AND amn.idacc = a.idacc\r\n" +
+  "   AND amn.currency = a.currency\r\n" +
+  "   AND a.currency = sin.currency\r\n" +
+  "   AND a.idacc = sin.idacc\r\n" +
+  "   AND sin.dtend = (SELECT MIN (sin2.dtend) \r\n" +
+  "                      FROM saldo sin2\r\n" +
+  "                     WHERE sin2.idacc = sin.idacc\r\n" +
+  "                       AND sin2.currency = sin.currency\r\n" +
+  "                       AND sin2.dtend &gt;= " + sDtBegin + "\r\n" +
+  "                   )\r\n" +
+  "   AND sout.dtend = (SELECT MIN (sou2.dtend)\r\n" +
+  "                       FROM saldo sou2\r\n" +
+  "                      WHERE sout.currency = sou2.currency\r\n" +
+  "                        AND sout.idacc = sou2.idacc\r\n" +
+  "                        AND sou2.dtend &gt; " + sDtEnd + "\r\n" +
+  "                    )\r\n" +
+  "   AND a.currency = sout.currency\r\n" +
+  "   AND a.idacc = sout.idacc\r\n" +
+  "";
+  RunSQL(SQLCmd, true);
+
+  // Обороты за период
+  SQLCmd =
+  "UPDATE tmp_oborot\r\n" +
+  "   SET (debit, credit) = \r\n" +
+  "       ((SELECT SUM (s2.debit) AS debit, SUM (s2.credit) AS credit\r\n" +
+  "           FROM saldo s2\r\n" +
+  "          WHERE s2.idacc = tmp_oborot.idacc\r\n" +
+  "            AND s2.currency = tmp_oborot.currency\r\n" +
+  "            AND s2.dtend BETWEEN " + sDtBegin + " AND " + sDtEnd + "\r\n" +
+  "       ))\r\n" +
+  "";
+  RunSQL(SQLCmd, true);
+
+  // Если обороты затрагивают текущий день, добавим их из accmoney...
+  SQLCmd =
+  "UPDATE tmp_oborot\r\n" +
+  "   SET debit = NVL (debit, 0) +\r\n" +
+  "       ((SELECT amn.damount\r\n" +
+  "           FROM accmoney amn\r\n" +
+  "          WHERE amn.idacc = tmp_oborot.idacc\r\n" +
+  "            AND amn.currency = tmp_oborot.currency\r\n" +
+  "       )),\r\n" +
+  "       credit = NVL (credit, 0) +\r\n" +
+  "       ((SELECT amn.camount AS credit\r\n" +
+  "           FROM accmoney amn\r\n" +
+  "          WHERE amn.idacc = tmp_oborot.idacc\r\n" +
+  "            AND amn.currency = tmp_oborot.currency\r\n" +
+  "       ))\r\n" +
+  " WHERE GetWorkODB_DAY () &gt;= " + sDtBegin + " AND GetWorkODB_DAY () &lt;= " + sDtEnd + "\r\n" +
+  "";
+  RunSQL(SQLCmd, true);
+
+  SQLCmd =
+  "UPDATE tmp_oborot\r\n" +
+  "   SET incom = outgo, debit = 0, credit = 0\r\n" +
+  " WHERE incom IS NULL AND debit IS NULL AND credit IS NULL";
+  RunSQL(SQLCmd, true);
+
+  // HostApp.CreateGridForm("SELECT * FROM tmp_oborot", false).ShowModal();
+
+  Rep = CRP.CreateReport ("obsal_inout2.rpt");
+  Rep.SetParam ("DtBegin", D.DtBegin);
+  Rep.SetParam ("DtEnd", D.DtEnd);
+  Rep.Preview();
+
+  RunSQL("DROP TABLE tmp_oborot", true);
+}
+
+</body>
+    <groups/>
+  </report>
+  <report name="msg_cmoverdraft" comment="Процедура расчета комисий по схемам Овердрафт" language="JScript">
+    <classes>
+      <class name="px_pay32"/>
+    </classes>
+    <body>/*
+--&gt;
+Разработан для регламентной операции расчета процентов по схемам Овердрафт.
+Подключается в качестве регламентной операции и виполняет расчет по договорам
+счетов 9-го класса, связанных со счетами, на которых установленна информационная
+блокировка "Красное сальдо". Для расчета устанавливается дата операции
+следующая за банковским днем. &lt;br/&gt;
+Отчет использует ряд функций из отчета &lt;b&gt;"Библиотека функций БрокБизнесБанка"&lt;/b&gt;.
+&lt;!--
+*/
+
+#include &lt;msg_bbbLib&gt;
+var pMainErr;
+
+function main() {
+  var SQL, sqlDate, sqlNextDt;
+  var vIdPaysevice=272;
+  var CR, tmpCR;
+
+  try // проверяем - если вызов из регламе нтных операций взводим флаг
+   {
+      isReglam = isReglament;
+      sqlDate = "getworkodb_day()";
+  } catch(e) {
+    if (e == "[object Error]") {
+      var Dlg = HostApp.NewDialog();
+      Dlg.NewField('DtRaschet',  'дата', BANKDAY.Value);
+      if (!Dlg.ShowModal())
+        return "";
+
+      sqlDate = mdy(new Date(Dlg.DtRaschet));
+    }
+  }
+
+  GDB.ExecSQL("drop table tmp_idacc");
+  SQL="create temp table tmp_idacc (       "+"\n"+
+      "  idacc    integer,                 "+"\n"+
+      "  acc      varchar(17),             "+"\n"+
+      "  currency smallint,                "+"\n"+
+      "  idagree  integer,                 "+"\n"+
+      "  transh_in  date,                  "+"\n"+
+      "  script   char(1)                  "+"\n"+
+      ") with no log                       "+"\n"+
+      "";
+  RunSQL(SQL, true);
+
+  SQL="insert into tmp_idacc(idacc, acc, currency,         "+"\n"+
+      "       idagree, script)                             "+"\n"+
+      "select l.idaccslave, a.acc, a.currency,             "+"\n"+
+      "       s.idagreement,                               "+"\n"+
+      "       p.usescript                                  "+"\n"+
+      "  from accountlink l, vaccount a, hold_date d,      "+"\n"+
+      "       accountservice s, payservice p               "+"\n"+
+      " where l.idproperty=102                             "+"\n"+
+      "   and a.idacc=l.idaccslave                         "+"\n"+
+      "   and d.idacc=l.idaccmaster                        "+"\n"+
+      "   and d.stopdate is null                           "+"\n"+
+      "   and d.setcod=7                                   "+"\n"+
+      "   and d.holdtype='И'                               "+"\n"+
+      "   and d.holdamount &lt; 0                             "+"\n"+
+      "   and s.idacc=a.idacc                              "+"\n"+
+      "   and s.idpayservice="+vIdPaysevice+"              "+"\n"+
+      "   and p.idpayservice=s.idpayservice                "+"\n"+
+      "";
+
+  RunSQL(SQL, true);
+
+  GDB.SetRoleName("servmake");
+
+  SQL="select min(dtend) dtend from calendar "+
+      " where daytype='Р' and dtend&gt;getworkodb_day()"
+  CR=GDB.CreateCursor(SQL);
+  sqlNextDt=mdy(new Date(CR.FieldByName('dtend').Value));
+
+  SQL="execute procedure payserv_createtmp(0)    "+"\n"+
+      "";
+  RunSQL(SQL, true);
+
+  SQL="INSERT INTO tmpid(id, script)                 "+"\n"+
+      "select t.idagree, t.script                    "+"\n"+
+      "  from tmp_idacc t                            "+"\n"+
+      "";
+  RunSQL(SQL, true);
+
+  SQL="EXECUTE PROCEDURE payserv_makeoper("+
+      "0, "+sqlDate+", "+sqlDate+", "+
+      sqlNextDt+", 'Y', 'Y', 'N'"+
+      ")";
+  tmpCR=GDB.CreateCursor(SQL);
+
+  /* Для проведения документов можно воспользоваться
+  следующим кодом
+  SQL="select * from vpayord "+
+      "where idpoper in (select idoperation from tmpoperation)";
+  tmpCR=GDB.CreateCursor(SQL);
+  GDB.SetRoleName("rldocisd");
+  while(!tmpCR.EOF) {
+    SQL="execute procedure payord_inside("+
+        tmpCR.FieldByName("idpayord").Value+")"+
+        "";
+    RunSQL(SQL, true);
+
+    tmpCR.Next();
+  }
+  */
+//  if (!tmpCR.EOF){
+//    HostApp.CreateGridForm(SQL).ShowModal();
+//  }
+
+  return "";
+}
+
+pMainErr=main();
+if (pMainErr.length&gt;0)
+  false;
+else
+  true;
+</body>
+    <groups/>
+  </report>
+  <report name="msg_overdraft" comment="Процедура расчета процентов по схемам Овердрафт" language="JScript">
+    <classes>
+      <class name="px_pay32"/>
+    </classes>
+    <body>/*
+--&gt;
+Разработан для регламентной операции расчета процентов по схемам Овердрафт.
+Подключается в качестве регламентной операции и виполняет расчет по договорам
+счетов, на которых установленна информационная блокировка "Красное сальдо"
+(на договорах, в обязательном порядке, должен быть установлен признак транша).&lt;br/&gt;
+Отчет использует ряд функций из отчета &lt;b&gt;"Библиотека функций БрокБизнесБанка"&lt;/b&gt;.
+&lt;!--
+*/
+
+#include &lt;msg_bbbLib&gt;
+var pMainErr;
+
+function main() {
+  var SQL, sqlDate, sqlNextDt;
+  var vIdPaysevice=273;
+  var CR, tmpCR;
+
+  try // проверяем - если вызов из регламе нтных операций взводим флаг
+   {
+      isReglam = isReglament;
+      sqlDate = "getworkodb_day()";
+  } catch(e) {
+    if (e == "[object Error]") {
+      var Dlg = HostApp.NewDialog();
+      Dlg.NewField('DtRaschet',  'дата', BANKDAY.Value);
+      if (!Dlg.ShowModal())
+        return "";
+
+      sqlDate = mdy(new Date(Dlg.DtRaschet));
+    }
+  }
+
+  GDB.ExecSQL("drop table tmp_idacc");
+  SQL="create temp table tmp_idacc (       "+"\n"+
+      "  idacc    integer,                 "+"\n"+
+      "  acc      varchar(17),             "+"\n"+
+      "  currency smallint,                "+"\n"+
+      "  idagree  integer,                 "+"\n"+
+      "  transh_in  date,                  "+"\n"+
+      "  script   char(1)                  "+"\n"+
+      ") with no log                       "+"\n"+
+      "";
+  RunSQL(SQL, true);
+
+  /* для определения начала транша можно воспользоваться процедурой
+     payserv_transh_in(idagreement, getworkodb_day(), 'N'|'Y')
+  */
+  SQL="insert into tmp_idacc(idacc, acc, currency,         "+"\n"+
+      "       idagree, transh_in, script)                  "+"\n"+
+      "select a.idacc, a.acc, a.currency,                  "+"\n"+
+      "       s.idagreement,                               "+"\n"+
+      "       payserv_transh_in(s.idagreement,             "+"\n"+
+      "                         "+sqlDate+", 'N'),         "+"\n"+
+      "       p.usescript                                  "+"\n"+
+      "  from hold_date d, vaccount a,                     "+"\n"+
+      "       accountservice s, payservice p               "+"\n"+
+      " where a.idacc=d.idacc                              "+"\n"+
+      "   and d.stopdate is null                           "+"\n"+
+      "   and d.holdtype='И'                               "+"\n"+
+      "   and d.setcod=7                                   "+"\n"+
+      "   and d.holdamount &lt; 0                             "+"\n"+
+      "   and s.idacc=a.idacc                              "+"\n"+
+      "   and s.idpayservice="+vIdPaysevice+"              "+"\n"+
+      "   and p.idpayservice=s.idpayservice                "+"\n"+
+      "";
+
+  RunSQL(SQL, true);
+
+  GDB.SetRoleName("servmake");
+
+  SQL="select min(dtend) dtend from calendar "+
+      " where daytype='Р' and dtend&gt;getworkodb_day()"
+  CR=GDB.CreateCursor(SQL);
+  sqlNextDt=mdy(new Date(CR.FieldByName('dtend').Value));
+
+  SQL="execute procedure payserv_createtmp(0)    "+"\n"+
+      "";
+  RunSQL(SQL, true);
+
+  SQL="INSERT INTO tmpid(id, script)                 "+"\n"+
+      "select t.idagree, t.script                    "+"\n"+
+      "  from tmp_idacc t                            "+"\n"+
+      " where transh_in="+sqlDate+"                  "+"\n"+
+      "";
+  RunSQL(SQL, true);
+
+  SQL="EXECUTE PROCEDURE payserv_makeoper("+
+      "0, "+sqlDate+", "+sqlDate+", "+
+      sqlNextDt+", 'Y', 'Y', 'N'"+
+      ")";
+  tmpCR=GDB.CreateCursor(SQL);
+
+  SQL="drop table tmp_oper";
+  RunSQL(SQL, false);
+
+  SQL="select * from tmpoperation        "+"\n"+
+      " into temp tmp_oper with no log   "+"\n"+
+      "";
+  RunSQL(SQL, true);
+
+  SQL="execute procedure payserv_createtmp(0)    "+"\n"+
+      "";
+  RunSQL(SQL, true);
+
+  SQL="INSERT INTO tmpid(id, script)                 "+"\n"+
+      "select t.idagree, t.script                    "+"\n"+
+      "  from tmp_idacc t                            "+"\n"+
+      " where transh_in&lt;&gt;"+sqlDate+"                 "+"\n"+
+      "";
+  RunSQL(SQL, true);
+
+  SQL="EXECUTE PROCEDURE payserv_makeoper("+
+      "3, "+sqlDate+", "+sqlDate+", "+
+      sqlNextDt+", 'Y', 'Y', 'N'"+
+      ")";
+  tmpCR=GDB.CreateCursor(SQL);
+
+  SQL="insert into tmp_oper         "+"\n"+
+      "select * from tmpoperation   "+"\n"+
+      "";
+  RunSQL(SQL, true);
+
+  /* Для проведения документов можно воспользоваться
+  следующим кодом
+  SQL="select * from vpayord "+
+      "where idpoper in (select idoperation from tmp_oper)";
+  tmpCR=GDB.CreateCursor(SQL);
+  GDB.SetRoleName("rldocisd");
+  while(!tmpCR.EOF) {
+    SQL="execute procedure payord_inside("+
+        tmpCR.FieldByName("idpayord").Value+")"+
+        "";
+    RunSQL(SQL, true);
+
+    tmpCR.Next();
+  }
+  */
+//  if (!tmpCR.EOF){
+//    HostApp.CreateGridForm(SQL).ShowModal();
+//  }
+
+  return "";
+}
+
+pMainErr=main();
+if (pMainErr.length&gt;0)
+  false;
+else
+  true;
+</body>
+    <groups/>
+  </report>
+</root>

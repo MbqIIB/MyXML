@@ -1,0 +1,136 @@
+<HTML>
+<HEAD>
+<STYLE>
+BODY { margin: 0px; overflow: visible; }
+TABLE.main {
+	position: absolute;
+	table-layout: fixed;
+	top: 0px;
+	left: 0px;
+	height: 100%;
+	width: 100%;
+	font-family: Arial;
+        border: none;
+}
+.xsl-element {
+	color: #990000;
+	font-weight: normal;
+	padding-left: 1em;
+        padding-bottom: 0.5em;
+	cursor: pointer;
+}
+.view {
+        position: relative; 
+        top:0px; 
+        left: 0px; 
+        height: 100%; 
+        width: 100%; 
+        overflow: auto; 
+        border: 1px solid black;
+}
+</STYLE>
+<TITLE>ќтчеты ЅрокЅизнесЅанка</TITLE>
+</HEAD>
+<SCRIPT><!--
+var xmlSamples = null;
+var xslInfoView = null;
+var pelemID="";
+
+window.onload=DoOnLoad;
+
+function DoOnLoad() {
+  xmlSamples = new ActiveXObject("MSXML2.DOMDocument.3.0");
+  xmlSamples.async = false;
+  xmlSamples.setProperty("SelectionLanguage", "XPath");
+  if (!xmlSamples.load("xml/msg_bbbReports.xml")) {
+    alert("Could not load msg_bbbReports.xml data:\n" + xmlSamples.parseError.reason);
+    return;
+  }
+
+  xslInfoView = new ActiveXObject("MSXML2.DOMDocument.3.0");
+  xslInfoView.async = false;
+  xslInfoView.setProperty("SelectionLanguage", "XPath");
+  if (!xslInfoView.load("XSL/BBBReports.xsl")) {
+    alert("Could not load infoview stylesheet:\n" + xslInfoView.parseError.reason);
+    return;
+  }
+
+  var groupTR = tblSamples.insertRow();
+  var groupTD = groupTR.insertCell();
+  groupTD.className = "xsl-element";
+  groupTD.style.color = "black";
+  groupTD.style.fontSize = "larger";
+  groupTD.style.paddingLeft = "0px";
+  groupTD.xmlid = "root";
+  groupTD.id = "root";  
+  groupTD.onclick = changeSample;
+  groupTD.onmouseover=DoMouseOver;
+  groupTD.onmouseout=DoMouseOut;
+  groupTD.innerText = "ќтчеты ЅрокЅизнесЅанка";
+
+  var nodelistSamples = xmlSamples.selectNodes("//report");
+  for (var i=0; i<nodelistSamples.length; i++) {
+    var nodeSample = nodelistSamples.item(i);
+
+    var elemTR = tblSamples.insertRow();
+    var elemTD = elemTR.insertCell();
+
+    elemTD.className = "xsl-element";
+    elemTD.xmlid = nodeSample.getAttribute("name");
+    elemTD.id = nodeSample.getAttribute("name");
+    elemTD.innerText = (i+1)+". "+nodeSample.getAttribute("comment");
+    elemTD.onclick = changeSample;
+    elemTD.onmouseover=DoMouseOver;
+    elemTD.onmouseout=DoMouseOut;
+  }
+
+  groupTD.click();
+}
+
+function changeSample() {
+  if (this.xmlid != null) {
+    if (this.xmlid == "root") {
+      var nodeSample = xmlSamples.selectSingleNode("/" + String(this.xmlid));
+    } else {
+      var nodeSample = xmlSamples.selectSingleNode("//*[@name = '" + String(this.xmlid) + "']");
+    }
+    if (nodeSample != null) {
+      divInfo.innerHTML = nodeSample.transformNode(xslInfoView);
+    } else {
+      divInfo.innerHTML = "";
+    }
+
+    if(pelemID.length>0) {
+      var vElem=document.getElementById(pelemID);
+      vElem.style.backgroundColor = vElem.parentElement.style.backgroundColor;
+    }
+    pelemID=this.id;
+    this.style.backgroundColor = "menu";
+  }
+}
+function DoMouseOver() {
+  this.style.textDecoration = "underline";
+  this.style.border = "1px solid black";
+}
+
+function DoMouseOut() {
+  this.style.textDecoration = "none";
+  this.style.border = "none";
+}
+--></SCRIPT>
+<BODY>
+<table id="main" class="main" rows="1" cols="2">
+  <tr>
+    <td width="200px" valign="top">
+      <div id="divSamples" class="view">
+        <table id="tblSamples">
+        </table>
+      </div>
+    </td>
+    <td align="left" valign="top">
+      <div id="divInfo" class="view" style="padding-left: 1em;"></div>
+    </td>
+  </tr>
+</table>
+</BODY>
+</HTML>

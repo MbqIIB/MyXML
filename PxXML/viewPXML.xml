@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<?xml-stylesheet type="text/xsl" href="xsl/viewPXML.xsl"?>
+<groups>
+   <groupRef href="xml/msg_bbbReports.xml"/>
+   <groupRef href="xml/crpedocs.xml"/>
+</groups>
+
