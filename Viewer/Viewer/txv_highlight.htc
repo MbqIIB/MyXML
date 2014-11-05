@@ -1,0 +1,84 @@
+<PUBLIC:COMPONENT URN="txvhighlight">
+<PUBLIC:PROPERTY 
+		NAME="selected"
+		GET="getSelected"
+		PUT="putSelected" />
+		
+<PUBLIC:ATTACH 
+		EVENT="oncontentready"
+		ONEVENT="DoContentReady()" />
+<PUBLIC:ATTACH 
+		EVENT="onmouseover"
+		ONEVENT="DoMouseOver()" />
+<PUBLIC:ATTACH 
+		EVENT="onmouseout"
+		ONEVENT="DoMouseOut()" />
+<PUBLIC:ATTACH 
+		EVENT="onclick"
+		ONEVENT="DoClick()" />
+
+<SCRIPT>
+var bSelected = null;
+var isLoaded = false;
+
+style.cursor = "default";
+
+function getSelected() {
+	return bSelected ? "yes" : "no";
+}
+
+function putSelected(vValue) {
+	var bOldValue = bSelected;
+	
+	if (String(vValue) == "yes") {
+		bSelected = true;
+	} else {
+		bSelected = false;
+	}
+	if (isLoaded && bOldValue != bSelected) {
+		showSelected();
+	}
+}
+
+function DoContentReady() {
+	isLoaded = true;
+	if (bSelected != null) {
+		showSelected();
+	}
+}
+
+function DoMouseOver() {
+	element.style.textDecoration = "underline";
+}
+
+function DoMouseOut() {
+	element.style.textDecoration = "none";
+}
+
+function DoClick() {
+	var oColl = element.document.all.urns("txvhighlight");
+	for (var i = 0; i < oColl.length; i++) {
+		if (oColl.item(i).selected != "no" && oColl.item(i) != element) {
+			oColl.item(i).selected = "no";
+		}
+	}
+	
+	if (!bSelected) {
+		bSelected = true;
+		showSelected();
+	}
+}
+
+function showSelected() {
+	if (bSelected) {
+		element.style.backgroundColor = "menu";
+		element.style.fontWeight = "bold";
+	} else {
+		element.style.backgroundColor = element.parentElement.style.backgroundColor;
+		element.style.fontWeight = "normal";
+	}
+}	
+
+
+</SCRIPT>
+</PUBLIC:COMPONENT>

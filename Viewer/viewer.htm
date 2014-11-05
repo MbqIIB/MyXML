@@ -1,0 +1,515 @@
+<HTML xmlns:txv xmlns:txvtabs xmlns:txvtab xmlns:txvgroup>
+<HEAD>
+<STYLE>
+@media all
+{
+	txv\:txvbar   {
+		behavior: url(viewer/txv_bar.htc);
+		padding: 5px;
+	}
+	txv\:txvbutton {
+		behavior: url(viewer/txv_button.htc);
+	}	
+	txvtabs\:tabs   {
+		behavior: url(viewer/txv_tabs.htc);
+	}
+	txvtab\:tab   {
+		behavior: url(viewer/txv_tab.htc);
+	}
+	txvgroup\:group {
+		behavior: url(viewer/txv_group.htc);
+	}
+}
+
+TABLE.main
+{
+	position: absolute;
+	table-layout: fixed;
+	top: 0px;
+	left: 0px;
+	height: 100%;
+	width: 100%;
+	font-family: Arial;
+}
+DIV.message
+{
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	vertical-align: middle;
+	font-size: x-large;
+}
+.xsl-element {
+	color: #990000;
+	font-weight: normal;
+	padding-left: 1em;
+	behavior: url(viewer/txv_highlight.htc);
+}
+.view {position: relative; top:0px; left: 0px; height: 100%; width: 100%; overflow: auto}
+.xmlview {height: 100%; width: 100%}
+IFRAME.frmview {top:0px; left: 0px}
+</STYLE>
+</HEAD>
+<SCRIPT><!--
+var xmlSamples = null;
+var xslXmlView = null;
+var xslXsltView = null;
+var xslInfoView = null;
+var xmlData = null;
+var xmlXsltSample = null;
+var hashXml = new Object();
+var currentSampleNode = null;
+
+function DoOnLoad() {	
+	if (!checkVersion()) {
+		main.style.display = "none";
+		divVersion.style.display = "block";
+		return;
+	}
+	xmlSamples = new ActiveXObject("MSXML2.DOMDocument.3.0");
+	xslXmlView = new ActiveXObject("MSXML2.DOMDocument.3.0");
+	xslXsltView = new ActiveXObject("MSXML2.DOMDocument.3.0");
+	xslInfoView = new ActiveXObject("MSXML2.DOMDocument.3.0");
+	xmlXsltSample = new ActiveXObject("MSXML2.DOMDocument.3.0");
+
+	xmlSamples.async = false;
+	xslXmlView.async = false;
+	xslXsltView.async = false;
+	xslInfoView.async = false;
+	xmlXsltSample.async = false;
+
+	xmlSamples.setProperty("SelectionLanguage", "XPath");
+	xslXmlView.setProperty("SelectionLanguage", "XPath");
+	xslXsltView.setProperty("SelectionLanguage", "XPath");
+	xslInfoView.setProperty("SelectionLanguage", "XPath");
+	xmlXsltSample.setProperty("SelectionLanguage", "XPath");
+	
+	if (!xmlSamples.load("viewer/samples.xml")) {
+		alert("Could not load samples data:\n" + xmlSamples.parseError.reason);
+		return;
+	}
+	if (!xslXmlView.load("viewer/xmlview.xsl")) {
+		alert("Could not load xmlview stylesheet:\n" + xslXmlView.parseError.reason);
+		return;
+	}
+	if (!xslXsltView.load("viewer/xsltview.xsl")) {
+		alert("Could not load xsltview stylesheet:\n" + xslXsltView.parseError.reason);
+		return;
+	}
+	if (!xslInfoView.load("viewer/infoview.xsl")) {
+		alert("Could not load infoview stylesheet:\n" + xslInfoView.parseError.reason);
+		return;
+	}
+
+	// Initialize XML hash table with all /samples/xml
+	var	nodelistXml = xmlSamples.selectNodes("/samples/xml");
+	for (var i=0; i<nodelistXml.length; i++) {
+		var nodeXml = nodelistXml.item(i);
+		var sId = String(nodeXml.getAttribute("id"));
+		var sSrc = String(nodeXml.getAttribute("src"));
+		
+		addXmlDom("g__" + sId, sSrc);
+	}
+
+	var groupTR = tblSamples.insertRow();
+	var groupTD = groupTR.insertCell();
+	groupTD.className = "xsl-element";
+	groupTD.style.color = "black";
+	groupTD.style.fontSize = "larger";
+	groupTD.style.paddingLeft = "0px";
+	groupTD.xmlid = "xsl-elements";
+	groupTD.onclick = changeSample;
+	groupTD.innerText = "XSLT Elements";
+	groupTD.selected = "yes";
+	
+	var nodelistSamples = xmlSamples.selectNodes("//group[@id='xsl-elements']/sample");
+	for (var i=0; i<nodelistSamples.length; i++) {
+		var nodeSample = nodelistSamples.item(i);
+		
+		var elemTR = tblSamples.insertRow();
+		var elemTD = elemTR.insertCell();
+		
+		elemTD.className = "xsl-element";
+		elemTD.innerText = nodeSample.getAttribute("name");
+		elemTD.xmlid = nodeSample.getAttribute("id");
+		elemTD.onclick = changeSample;
+		elemTD.selected="no";
+	}
+
+	// XSLT Functions
+	var group2TR = tblSamples.insertRow();
+	var group2TD = group2TR.insertCell();
+	group2TD.className = "xsl-element";
+	group2TD.style.color = "black";
+	group2TD.style.fontSize = "larger";
+	group2TD.style.paddingLeft = "0px";
+	group2TD.xmlid = "xsl-functions";
+	group2TD.onclick = changeSample;
+	group2TD.innerText = "XSLT Functions";
+	group2TD.selected = "no";
+
+
+	nodelistSamples = xmlSamples.selectNodes("//group[@id='xsl-functions']/sample");
+	for (var i=0; i<nodelistSamples.length; i++) {
+		var nodeSample = nodelistSamples.item(i);
+		
+		var elemTR = tblSamples.insertRow();
+		var elemTD = elemTR.insertCell();
+		
+		elemTD.className = "xsl-element";
+		elemTD.innerText = nodeSample.getAttribute("name");
+		elemTD.xmlid = nodeSample.getAttribute("id");
+		elemTD.onclick = changeSample;
+		elemTD.selected="no";
+	}
+
+	// XPath Functions
+	var group3TR = tblSamples.insertRow();
+	var group3TD = group3TR.insertCell();
+	group3TD.className = "xsl-element";
+	group3TD.style.color = "black";
+	group3TD.style.fontSize = "larger";
+	group3TD.style.paddingLeft = "0px";
+	group3TD.xmlid = "xpath-functions";
+	group3TD.onclick = changeSample;
+	group3TD.innerText = "XPath Functions";
+	group3TD.selected = "no";
+
+	nodelistSamples = xmlSamples.selectNodes("//group[@id='xpath-functions']/sample");
+	for (var i=0; i<nodelistSamples.length; i++) {
+		var nodeSample = nodelistSamples.item(i);
+		
+		var elemTR = tblSamples.insertRow();
+		var elemTD = elemTR.insertCell();
+		
+		elemTD.className = "xsl-element";
+		elemTD.innerText = nodeSample.getAttribute("name");
+		elemTD.xmlid = nodeSample.getAttribute("id");
+		elemTD.onclick = changeSample;
+		elemTD.selected="no";
+	}
+	
+	groupTD.click();
+}
+function changeSample() {
+	if (this.xmlid != null) {
+		var nodeSample = xmlSamples.selectSingleNode("//*[@id = '" + String(this.xmlid) + "']");
+		// Info
+		var nodeInfo = nodeSample.selectSingleNode("info");
+		if (nodeInfo != null) {
+			divInfo.innerHTML = nodeInfo.transformNode(xslInfoView);
+		} else {
+			divInfo.innerHTML = "";
+		}
+		
+		// XML
+		// Add DOMs to hashXml
+		var nodelistXml = nodeSample.selectNodes("xml");
+		if (nodelistXml.length == 0) {
+			tblXml.style.display = "none";
+		} else {
+			tblXml.style.display = "block";
+			
+			for (var i=0; i<nodelistXml.length; i++) {
+				var nodeXml = nodelistXml.item(i);
+				var sUse = nodeXml.getAttribute("use");
+				var sId = "";
+				var sSrc = "";
+				var sName = "";
+				if (sUse != null) {
+					sName = sUse;
+					sId = "g__" + sUse;
+				} else {
+					// Add a local xml dom
+					sId = nodeXml.getAttribute("id");
+					sSrc = nodeXml.getAttribute("src");
+					sName = sId;
+					addXmlDom(sId, sSrc);
+				}
+				
+				// Configure the xml tabs for this sample
+				var oTab = tabsXml.children.item(i);
+				oTab.hashId = sId;
+				oTab.innerText = sName;
+				oTab.style.display = "inline";
+
+				switch (i) {
+				case 0: 
+					ifrmXml0.document.body.innerHTML = "";
+					ifrmXml0.document.write(hashXml[sId].transformNode(xslXmlView));
+					break;
+				case 1: 
+					ifrmXml1.document.body.innerHTML = "";
+					ifrmXml1.document.write(hashXml[sId].transformNode(xslXmlView));
+					break;
+				case 2: 
+					ifrmXml2.document.body.innerHTML = "";
+					ifrmXml2.document.write(hashXml[sId].transformNode(xslXmlView));
+					break;
+				case 3: 
+					ifrmXml3.document.body.innerHTML = "";
+					ifrmXml3.document.write(hashXml[sId].transformNode(xslXmlView));
+					break;
+				case 4: 
+					ifrmXml4.document.body.innerHTML = "";
+					ifrmXml4.document.write(hashXml[sId].transformNode(xslXmlView));
+					break;
+				}
+			}
+			tabsXml.selectedIndex = 0;
+		}
+	
+		// XSLT
+		var nodelistXslt = nodeSample.selectNodes("xslt");
+		if (nodelistXslt.length == 0) {
+			tblXslt.style.display = "none";
+			ifrmResultHtml.document.body.innerHTML = "";
+			xmpResultText.innerText = "";			
+		} else {
+			tblXslt.style.display = "block";
+	
+			for (var i=4; i>=0; i--) {
+				var nodeXslt = null;
+				var sTabText = "";
+				var sXsltSrc = "";
+				var bLoad = false;
+				if (i < nodelistXslt.length) {
+					nodeXslt = nodelistXslt.item(i);
+					sTabText = nodeXslt.getAttribute("name");
+					sXsltSrc = nodeXslt.getAttribute("src");
+					bLoad = xmlXsltSample.load(sXsltSrc);
+				}
+				
+				// Configure the xslt tabs for this sample
+				var oXsltTab = tabsXslt.children.item(i);
+				if (bLoad) {
+					oXsltTab.innerText = sTabText;
+					oXsltTab.style.display = "inline";
+				} else {
+					oXsltTab.innerText = "";
+					oXsltTab.style.display = "none";
+				}
+				
+				switch (i) {
+					case 0: 
+						ifrmXslt0.document.body.innerHTML = "";
+						if (bLoad) {
+							ifrmXslt0.document.write(xmlXsltSample.transformNode(xslXsltView));
+						}
+						break;
+					case 1: 
+						ifrmXslt1.document.body.innerHTML = "";
+						if (bLoad) {
+							ifrmXslt1.document.write(xmlXsltSample.transformNode(xslXsltView));
+						}
+						break;
+					case 2:
+						ifrmXslt2.document.body.innerHTML = "";
+						if (bLoad) {
+							ifrmXslt2.document.write(xmlXsltSample.transformNode(xslXsltView));
+						}
+						break;
+					case 3: 
+						ifrmXslt3.document.body.innerHTML = "";
+						if (bLoad) {
+							ifrmXslt3.document.write(xmlXsltSample.transformNode(xslXsltView));
+						}
+						break;
+					case 4: 
+						ifrmXslt4.document.body.innerHTML = "";
+						if (bLoad) {
+							ifrmXslt4.document.write(xmlXsltSample.transformNode(xslXsltView));
+						}
+						break;
+				}
+			}
+			tabsXslt.selectedIndex = 0;
+
+			// Result
+			var sXmlHashId = tabsXml.children(tabsXml.selectedIndex).hashId;
+			var sResult = "";
+			try {
+				sResult = hashXml[sXmlHashId].transformNode(xmlXsltSample);
+			} catch (e) {
+				sResult = e.description;
+			}
+			ifrmResultHtml.document.body.innerHTML = "";
+			ifrmResultHtml.document.write(sResult);
+			xmpResultText.innerText = sResult;
+		}
+	}
+}
+function changeView(sViewName) {
+	// sViewName = info, xslt, xml, transform, script
+	
+	switch (sViewName) {
+	case "Info" :
+		grpView.visibleIndex = "0";
+		break;
+	case "XML" :
+		grpView.visibleIndex = "1";
+		break;
+	case "XSLT" :
+		grpView.visibleIndex = "2";
+		break;
+	case "Result" :
+		grpView.visibleIndex = "3";
+		break;
+	}
+}
+function resultChange() {
+	grpResult.visibleIndex = tabsResult.selectedIndex;
+}
+function xmlChange() {
+	grpXml.visibleIndex = tabsXml.selectedIndex;
+	
+}
+function xsltChange() {
+	grpXslt.visibleIndex = tabsXslt.selectedIndex;
+}
+function addXmlDom(sId, sSrc) {
+	if (hashXml[sId] == null) {
+		hashXml[sId] = new ActiveXObject("MSXML2.DOMDocument.3.0");
+		var newXml = hashXml[sId];
+		newXml.async = false;
+		newXml.setProperty("SelectionLanguage", "XPath");
+		newXml.load(sSrc);
+	}
+}
+function checkVersion() {
+	var bReturn = false;
+
+	// Need to be running IE 5 or higher
+	var sVersion = String(window.clientInformation.appVersion);
+//	alert(sVersion);
+	if (sVersion.search(/MSIE [5-9]/) != -1) {
+		bReturn = true;
+	}
+	
+	// Need to be able to create the version dependent msxml
+	if (bReturn) {
+		var xmldom = null;
+		try {
+			xmldom = new ActiveXObject("MSXML2.DOMDocument.3.0");
+		} catch (e) {
+			bReturn = false;
+		}	
+	}
+	
+	// Needs to support certain features
+	if (bReturn) {
+		bReturn = xmldom.implementation.hasFeature("MS-DOM", "2.0");
+	}
+
+	return bReturn;
+}
+--></SCRIPT>
+<BODY style="margin: 0px" style="overflow: visible" onload="DoOnLoad()">
+<div id="divVersion" style="display: none" class="message">
+	<p>The XSLT Viewer requires:</p>
+	<p>Internet Explorer Version 5 or above</p>
+	<p><a href="http://www.microsoft.com/windows/ie/default.htm">IE Page</a></p>
+	<p>MSXML 3.0</p>
+	<p><a href="http://msdn.microsoft.com/xml/default.asp">MSXML</a></p>
+	
+</div>
+<table id="main" class="main" border="1" rows="2" cols="2">
+	<!-- 4 Cells, 2x2 -->
+	<tr height="60px">
+		<td width="200px"><img src="viewer/xslt_logo.bmp"/>
+		</td>
+		<td bgcolor="menu" nowrap="true">
+			<txv:txvbar id="btnView" onchange="changeView(this.value)">
+				<txv:txvbutton state="selected" image="viewer/info_off.gif" hoverImage="viewer/info_on.gif" title="View Discription of this Sample">Info</txv:txvbutton>
+				<txv:txvbutton image="viewer/xml_off.gif" hoverImage="viewer/xml_on.gif" title="View XML Data">XML</txv:txvbutton>
+				<txv:txvbutton image="viewer/xsl_off.gif" hoverImage="viewer/xsl_on.gif" title="View Stylesheet Code">XSLT</txv:txvbutton>
+				<txv:txvbutton image="viewer/result_off.gif" hoverImage="viewer/result_on.gif" title="View Result">Result</txv:txvbutton>
+			</txv:txvbar>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top"><div id="divSamples" class="view">
+			<table id="tblSamples" border="0">
+			</table></div>
+		</td>
+		<td align="left" valign="top">
+			<txvgroup:group id="grpView" visibleIndex="0">
+				<div id="divInfo" class="view"></div>
+				<div id="divXml" class="xmlview">
+					<table id="tblXml" width="100%" height="100%" border="0" style="margin: 0px; padding: 0px" cellspacing="0" cellpadding="0">
+						<tr height="30px">
+							<td>
+								<txvtabs:tabs id="tabsXml" onchange="xmlChange()">
+									<txvtab:tab id="tabXml0" style="display: none">One</txvtab:tab>
+									<txvtab:tab id="tabXml1" style="display: none">Two</txvtab:tab>
+									<txvtab:tab id="tabXml2" style="display: none">Three</txvtab:tab>
+									<txvtab:tab id="tabXml3" style="display: none">Four</txvtab:tab>
+									<txvtab:tab id="tabXml4" style="display: none">Five</txvtab:tab>
+								</txvtabs:tabs>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<txvgroup:group id="grpXml" visibleIndex="0">
+									<iframe id="ifrmXml0" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+									<iframe id="ifrmXml1" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+									<iframe id="ifrmXml2" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+									<iframe id="ifrmXml3" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+									<iframe id="ifrmXml4" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+								</txvgroup:group>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div id="divXslt" class="xmlview">
+					<table id="tblXslt" width="100%" height="100%" border="0" style="margin: 0px; padding: 0px" cellspacing="0" cellpadding="0">
+						<tr height="30px">
+							<td>
+								<txvtabs:tabs id="tabsXslt" onchange="xsltChange()">
+									<txvtab:tab id="tabXslt0" style="display: none">One</txvtab:tab>
+									<txvtab:tab id="tabXslt1" style="display: none">Two</txvtab:tab>
+									<txvtab:tab id="tabXslt2" style="display: none">Three</txvtab:tab>
+									<txvtab:tab id="tabXslt3" style="display: none">Four</txvtab:tab>
+									<txvtab:tab id="tabXslt4" style="display: none">Five</txvtab:tab>
+								</txvtabs:tabs>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<txvgroup:group id="grpXslt" visibleIndex="0">
+									<iframe id="ifrmXslt0" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+									<iframe id="ifrmXslt1" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+									<iframe id="ifrmXslt2" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+									<iframe id="ifrmXslt3" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+									<iframe id="ifrmXslt4" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+								</txvgroup:group>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div id="divResults" class="view">
+					<table width="100%" height="100%" border="0" style="margin: 0px; padding: 0px; table-layout: fixed" cellspacing="0" cellpadding="0">
+						<tr height="30px">
+							<td>
+								<txvtabs:tabs id="tabsResult" onchange="resultChange()" selectedIndex="0">
+									<txvtab:tab>HTML</txvtab:tab>
+									<txvtab:tab>Text</txvtab:tab>
+								</txvtabs:tabs>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<txvgroup:group id="grpResult" visibleIndex="0">
+									<iframe id="ifrmResultHtml" class="frmview" scrolling="auto" width="100%" height="100%"></iframe>
+									<div id="divResultText" class="view"><xmp id="xmpResultText"></xmp></div>
+								</txvgroup:group>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</txvgroup:group>
+		</td>
+	</tr>
+</table>
+</BODY>
+</HTML>

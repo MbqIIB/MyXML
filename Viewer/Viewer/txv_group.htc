@@ -1,0 +1,47 @@
+<PUBLIC:COMPONENT URN="txvgroup">
+<PUBLIC:PROPERTY 
+		NAME="visibleIndex"
+		GET="getVisibleIndex"
+		PUT="putVisibleIndex" />
+		
+<PUBLIC:ATTACH 
+		EVENT="oncontentready"
+		ONEVENT="DoContentReady()" />
+		
+<SCRIPT>
+var iVisibleIndex = null;
+var isLoaded = false;
+
+function getVisibleIndex() {
+	return iVisibleIndex;
+}
+
+function putVisibleIndex(vValue) {
+	var iOldValue = iVisibleIndex;
+	
+	iVisibleIndex = Number(vValue);
+	if (isLoaded && iOldValue != iVisibleIndex) {
+		showVisible();
+	}
+}
+
+function DoContentReady() {
+	isLoaded = true;
+	if (iVisibleIndex != null) {
+		showVisible();
+	}
+}
+
+function showVisible() {
+	for (var i = 0; i<element.children.length; i++) {
+		//alert(element.children.item(i).tagName + ": " + element.children.item(i).id);
+		if (i == iVisibleIndex) {
+			element.children.item(i).style.display = "block";
+		} else {
+			element.children.item(i).style.display = "none";
+		}
+	}
+}	
+
+</SCRIPT>
+</PUBLIC:COMPONENT>

@@ -1,0 +1,15 @@
+<?xml-stylesheet type="text/xsl" href="sample.xsl"?> 
+<authors> 
+<author id="au101">
+<first-name>Matthew</first-name>
+<last-name>Gambardella</last-name>
+</author> 
+<author id="au102">
+<first-name>Kim</first-name>
+<last-name>Ralls</last-name>
+</author> 
+ <author id="au103">
+<first-name>Eva</first-name>
+<last-name>Corets</last-name>
+</author> 
+</authors> 

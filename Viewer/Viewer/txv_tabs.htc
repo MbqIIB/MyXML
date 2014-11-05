@@ -1,0 +1,115 @@
+<PUBLIC:COMPONENT>
+
+<PUBLIC:PROPERTY NAME="selectedIndex" 
+	GET="getSelectedIndex"
+	PUT="putSelectedIndex"
+/>
+<PUBLIC:PROPERTY NAME="selectedText"
+	GET="getSelectedText"
+	PUT="putSelectedText"
+/>
+
+<PUBLIC:METHOD NAME="DoInit" />
+
+<PUBLIC:EVENT NAME="onchange" ID="eventOnChange" />
+
+<PUBLIC:ATTACH EVENT="onselectstart" ONEVENT="DoSelectStart()" />
+<PUBLIC:ATTACH EVENT="onclick" ONEVENT="DoClick()" />
+
+<SCRIPT>
+var iSelectedIndex = null;
+var sSelectedText = null;
+var isLoaded = false;
+var tabCount = 0;
+
+style.cursor = "default";
+style.backgroundColor = "#f8f8f0";
+style.borderTop = "5px solid #f8f8f0";
+style.borderBottom = "2px ridge";
+style.width = "100%";
+
+function DoInit() {
+	tabCount++;
+	if (tabCount >= element.all.length) {
+		findSelectedText(String(sSelectedText));
+		showSelected();
+		isLoaded = true;
+	}
+}
+
+function getSelectedIndex() {
+	return iSelectedIndex;
+}
+function putSelectedIndex(vValue) {
+	var iOldValue = iSelectedIndex;
+	if (Number(vValue) >= 0 && Number(vValue) < element.all.length) {
+		iSelectedIndex = Number(vValue);
+		if (isLoaded) {
+			showSelected();
+			if (iOldValue != iSelectedIndex) {
+				eventOnChange.fire();
+			}
+		}
+	}
+}
+function getSelectedText() {
+	return sSelectedText;
+}
+function putSelectedText(vValue) {
+	var iOldValue = iSelectedIndex;
+	findSelectedText(String(vValue));
+	if (isLoaded) {
+		showSelected();
+		if (iOldValue != iSelectedIndex) {
+			eventOnChange.fire();
+		}
+	}
+}
+	
+function 	showSelected() {
+	// selects based off the selectedIndex property value
+	sSelectedText = null;
+	for (var i=0; i<element.all.length; i++) {
+		if (i == iSelectedIndex) {
+			element.all.item(i).select();
+			sSelectedText = element.all.item(iSelectedIndex).innerText
+		} else {
+			element.all.item(i).deselect();
+		}
+	}
+}
+
+function DoClick() {
+	var srcElement = window.event.srcElement;
+	var iOldSelectedIndex = iSelectedIndex;
+	
+	if (srcElement.tagName == "tab") {
+		for (var i=0; i<element.all.length; i++) {
+			if (srcElement == element.all.item(i)) {
+				iSelectedIndex = i;
+				element.all.item(i).select();
+			} else {
+				element.all.item(i).deselect();
+			}
+		}
+	}
+	if (iOldSelectedIndex != iSelectedIndex) {
+		eventOnChange.fire();
+	}
+}
+
+function findSelectedText(sText) {
+	for (var i=0; i<element.all.length; i++) {
+		if (sText == element.all.item(i).innerText) {
+			iSelectedIndex = i;
+			sSeletedText = sText;
+		}
+	}
+}
+
+function DoSelectStart() {
+	window.event.cancelBubble = true;
+	window.event.returnValue = false;
+}
+</SCRIPT>
+</PUBLIC:COMPONENT>

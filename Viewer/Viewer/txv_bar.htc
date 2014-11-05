@@ -1,0 +1,48 @@
+<HTC URN="txv">
+
+<PROPERTY NAME="value" 
+					GET="getValue"
+					PUT="putValue" />
+					
+<EVENT	NAME="onchange" id="oc"/>
+
+<ATTACH EVENT="ondocumentready" HANDLER="DoInit" />
+<ATTACH EVENT="onselectstart"   HANDLER="DoSelect"    />
+
+<SCRIPT LANGUAGE="jscript">
+var propValue = null;
+
+function DoInit() {
+	style.backgroundColor = "menu";
+	style.width="100%";
+	style.height= "50px";
+}
+
+function getValue() { return propValue; }
+function putValue(vValue) {
+	var sNewValue = String(vValue);
+	if (sNewValue != propValue) {
+		propValue = String(vValue);
+		
+		if (window.event.srcElement.tagName != "mybutton") {
+			var sPropTest = sNewValue.replace(/[^\w]*/g, "");
+			for (var i=0; i<children.length; i++) {
+				var sButtonText = String(children.item(i).innerText).replace(/[\n\t\f\r\v]*/g, "");
+				if (sButtonText == sPropTest) {
+					children.item(i).state = "selected";
+				} else {
+					children.item(i).state = "normal";
+				}
+			}
+		}
+		oc.fire();
+	}
+}
+
+function DoSelect() {
+	window.event.cancelBubble = true;
+	window.event.returnValue = false;   
+}
+
+</SCRIPT>
+</HTC>  

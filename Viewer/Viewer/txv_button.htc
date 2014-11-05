@@ -1,0 +1,149 @@
+<HTC URN="txv">
+
+<PROPERTY NAME="state" 
+					GET="getState"
+					PUT="putState"
+					VALUE="normal" />
+<PROPERTY NAME="image" 
+					GET="getImage"
+					PUT="putImage" />
+<PROPERTY NAME="hoverImage" 
+					GET="getHoverImage"
+					PUT="putHoverImage" />
+<PROPERTY NAME="title" />
+
+<ATTACH EVENT="ondocumentready" HANDLER="DoInit" />
+<ATTACH EVENT="onmouseover"     HANDLER="DoMouseOver" />
+<ATTACH EVENT="onmouseout"      HANDLER="DoMouseOut"  />
+<ATTACH EVENT="onclick"					HANDLER="DoClick"  />
+<ATTACH EVENT="onselectstart"   HANDLER="DoSelect"    />
+
+<SCRIPT LANGUAGE="jscript">
+// Global Variables
+var imgId = null;
+var propState = null;											// "normal", "hover", "selected"
+var propImage = null;
+var propHoverImage = null;
+var propTitle = null;
+
+function DoInit() {
+	if (propState == null) {
+		propState = "normal";
+	}
+
+	style.padding = "3px";
+	style.fontFamily = "MS Sans Serif";
+	style.cursor = "default";
+	style.textAlign = "center";
+	style.borderStyle = "solid";
+	style.borderWidth = "1px";
+	style.width = "50px";
+	style.height = "100%";
+	
+	ShowState();
+}
+
+
+function getImage() { return propImage; }
+function putImage(vValue) {
+	propImage = String(vValue);
+	if (propState == "normal") {
+		SetImage(propImage);
+	}
+}
+function getHoverImage() { return propHoverImage; }
+function putHoverImage(vValue) {
+	propHoverImage = String(vValue);
+	if (propState != "normal") {
+		SetImage(propHoverImage);
+	}
+}
+function getState() { return propState; }
+function putState(vValue) {
+	var sValue = String(vValue);
+	if (sValue == "normal" || sValue == "hover" || sValue == "selected") {
+		propState = String(vValue);
+		ShowState();
+	}
+}
+
+function DoMouseOver() {
+	if (propState == "normal") {
+		propState = "hover";
+		ShowState()
+	}
+	
+}
+
+function DoMouseOut() {
+	if (propState == "hover") {
+		propState = "normal";
+		ShowState()
+	}
+}
+
+function DoClick() {
+	if (propState != "selected") {
+		CheckGroup();
+		propState = "selected";
+		ShowState();
+		
+		var sText = String(innerText);
+		sText = sText.replace(/[\n\t\f\r\v]*/g, "");
+		parentElement.value = sText;
+	}
+}
+
+function CheckGroup() {
+
+	//  The collection of coolbutton's in this element's parent coolbar
+  oCoolBar = element.parentElement.all.urns("gb");
+
+  //
+  //  Iterate through the buttons in this coolbar and check if they are in
+  //  this group.
+  //    
+	for (i=0; i<oCoolBar.length; i++) {
+		oCoolBar(i).state = "normal";
+	}
+}
+
+function ShowState() {
+	switch (propState) {
+	case "hover":
+		style.backgroundColor = parentElement.style.backgroundColor;
+		style.borderColor = "threedhighlight threedshadow threedshadow threedhighlight";
+		SetImage(propHoverImage);
+		break;
+	case "selected":
+		style.backgroundColor = "white";
+		style.borderColor = "threedshadow threedhighlight threedhighlight threedshadow";
+		SetImage(propHoverImage);
+		break;
+	default:
+		style.backgroundColor = parentElement.style.backgroundColor;
+		style.borderColor = parentElement.style.backgroundColor;
+		SetImage(propImage);
+	}
+}
+
+function SetImage(sImage) {
+	if (sImage != null) {
+		var oImg = null;
+		if (imgId == null) {
+			imgId = "img_" + uniqueID;
+			var sInsertImg = "<IMG ID='"+ imgId + "' SRC='" + sImage + "' BORDER='0'><BR>";
+			insertAdjacentHTML ("AfterBegin", sInsertImg);
+		} else {
+			oImg = eval(imgId);
+			oImg.src = sImage;
+		}
+	}
+}
+
+function DoSelect() {
+	window.event.cancelBubble = true;
+	window.event.returnValue = false;   
+}
+</SCRIPT>
+</HTC>  

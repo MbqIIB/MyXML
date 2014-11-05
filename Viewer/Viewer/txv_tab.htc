@@ -1,0 +1,28 @@
+<PUBLIC:COMPONENT URN="txvtab">
+<PUBLIC:METHOD NAME="select" />
+<PUBLIC:METHOD NAME="deselect" />
+
+
+<SCRIPT>
+style.padding = "3px 3px 0px 3px";
+style.font = "menu";
+style.borderWidth = "1px";
+style.borderStyle = "solid";
+
+parentElement.DoInit();
+
+function select() {
+	style.color = "black";
+	style.fontWeight = "bold";
+	style.backgroundColor = "menu";
+	style.borderColor = "threedhighlight black menu threedhighlight";
+}
+function deselect() {
+	style.color = "gray";
+	style.fontWeight = "normal";
+	style.backgroundColor = "#f8f8f0";
+	style.borderColor = "#f8f8f0 menu #f8f8f0 #f8f8f0";
+}
+
+</SCRIPT>
+</PUBLIC:COMPONENT>

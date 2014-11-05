@@ -1,0 +1,3 @@
+<html>
+<body>file:///C:/Projects/XSLTExamples/XSLTFunctions/unparsed-entity-uri/somepic.jpg</body>
+</html>

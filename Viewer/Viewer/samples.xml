@@ -1,0 +1,1570 @@
+<samples> 
+	<xml id="books" src="viewer/books.xml"/> 
+	<group id="xsl-elements" name="XSLT Elements">
+		<info>
+			<syntax></syntax>
+			<description></description>
+			<remarks>
+				<p>XSL Transformations (XSLT) can be used to manipulate, sort, and filter XML data. Many transformations will target well-formed HTML. Well-formed means that any HTML tag can be used, subject to the stricter syntax rules of XML (all start tags are paired with end tags and are nested correctly). Well-formed HTML can be displayed by the browser, or further manipulated by XML tools.  XSLT is a valuable tool for generating well-formed HTML or other XML files.</p>
+			</remarks>
+		</info>
+		<sample id="sample-apply-imports"
+						name="xsl:apply-imports"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary">
+                                    <code>&lt;!-- Category: instruction--&gt;<br/>
+                                      &lt;<a href="http://www.w3.org/TR/xslt#element-apply-imports">
+                                      xsl:apply-imports</a>&#160;/&gt;
+                                    </code>
+                                  </p>
+                                </syntax>
+				<description>Invokes an overridden template rule.</description>
+				<remarks>
+					<p>A template rule that is being used to override a template rule in an imported style sheet can use the <b>&lt;xsl:apply-imports&gt;</b> element to invoke the overridden template rule.</p>
+					<p>At any point in the processing of a style sheet, there is a current template rule. Whenever a template rule is chosen by matching a pattern, the template rule becomes the current template rule for the instantiation of the rule's template. When an &lt;xsl:for-each&gt; element is instantiated, the current template rule becomes null for the instantiation of the content of the &lt;xsl:for-each&gt; element.</p>
+					<p><b>&lt;xsl:apply-imports&gt;</b> processes the current node using only template rules that were imported into the style sheet element containing the current template rule; the node is processed in the current template rule's mode. It is an error if <b>&lt;xsl:apply-imports&gt;</b> is instantiated when the current template rule is null.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="sample.xsl" src="elements/xsl-apply-imports/sample.xsl" name="sample.xsl"/> 
+			<xslt id="apply-imports" src="elements/xsl-apply-imports/sample-import.xsl" name="sample-import.xsl"/>
+		</sample> 
+		<sample id="sample-apply-templates"
+						name="xsl:apply-templates"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary">
+                                    <code>
+                                      &lt;!-- Category: instruction --&gt;<br/>
+                                      &lt;<a href="http://www.w3.org/TR/xslt#element-apply-templates">xsl:apply-templates</a><br/>
+                                      &#160;&#160;select = <var>node-set-expression</var> <br/>
+                                      &#160;&#160;mode = <var>qname</var>&gt;<br/>
+                                      &#160;&#160;&lt;!-- Content: (<a href="http://www.w3.org/TR/xslt#element-sort">xsl:sort</a> | <a
+                                      href="http://www.w3.org/TR/xslt#element-with-param">xsl:with-param</a>)* --&gt;<br/>
+                                      &lt;/xsl:apply-templates&gt;
+                                    </code>
+                                  </p>
+                                </syntax>
+				<description>Directs the XSLT processor to find the appropriate template to apply, based on the type and context of each selected node.</description>
+				<remarks>
+					<p>The <b>&lt;xsl:apply-templates&gt;</b> element first selects a set of nodes using the query specified in the select attribute. If this attribute is left unspecified, all children of the current node are selected. For each of the selected nodes, <b>&lt;xsl:apply-templates&gt;</b> directs the XSLT processor to find an appropriate &lt;xsl:template&gt; to apply. Templates are tested for applicability by comparing the node to the XPath expression specified in the template's match attribute. If more than one template satisfies the match pattern, the one appearing with the highest priority is chosen. If several templates have the same priority, the last in the style sheet is chosen.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-apply-templates/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-attribute"
+						name="xsl:attribute"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-attribute">xsl:attribute</a> <br/>
+                                  &#160;&#160;<b>name</b> = { <var>qname</var> }<br/>
+                                  &#160;&#160;namespace = { <var>uri-reference</var> }&gt;<br/>
+
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+                                  &lt;/xsl:attribute&gt;</code></p>
+                                </syntax>
+				<description>Creates an attribute node and attaches it to an output element.</description>
+				<remarks>
+					<p>The contents of this element specify the value of the attribute.</p>
+					<p>Attributes can be added or modified during transformation by placing the <b>&lt;xsl:attribute&gt;</b> element within elements that generate output, such as the &lt;xsl:copy&gt; element. Note that <b>&lt;xsl:attribute&gt;</b> can be used directly on output elements and not only in conjunction with &lt;xsl:element&gt;.</p>
+					<p>All attributes must be applied before children are added to the element.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-attribute/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-attribute-set"
+						name="xsl:attribute-set"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: top-level-element
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-attribute-set">xsl:attribute-set</a> <br/>
+                                  &#160;&#160;<b>name</b> = <var>qname</var> <br/>
+
+                                  &#160;&#160;use-attribute-sets = <var>qnames</var>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: <a href="http://www.w3.org/TR/xslt#element-attribute">xsl:attribute</a>*
+                                  --&gt;<br/>
+                                  &lt;/xsl:attribute-set&gt;</code></p>
+                                </syntax>
+				<description>Defines a named set of attributes.</description>
+				<remarks>
+					<p>The <b>&lt;xsl:attribute-set&gt;</b> element defines a named set of attributes. The name attribute specifies the name of the attribute set. The value of the name attribute is a qualified name. The content of the <b>&lt;xsl:attribute-set&gt;</b> element consists of zero or more &lt;xsl:attribute&gt; elements that specify the attributes in the set.</p>
+					<p>Attribute sets are used by specifying a use-attribute-sets attribute on &lt;xsl:element&gt;, &lt;xsl:copy&gt;, or <b>&lt;xsl:attribute-set&gt;</b> elements. The value of the use-attribute-sets attribute is a whitespace-separated list of names of attribute sets. Each name is specified as a qualified name. Specifying a use-attribute-sets attribute is equivalent to adding &lt;xsl:attribute&gt; elements for each of the attributes in each of the named attribute sets to the beginning of the content of the element with the use-attribute-sets attribute, in the same order in which the names of the attribute sets are specified in the use-attribute-sets attribute. It is an error if using use-attribute-sets attributes on <b>&lt;xsl:attribute-set&gt;</b> elements causes an attribute set to directly or indirectly use itself.</p>
+					<p>Attribute sets can also be used by specifying an xsl:use-attribute-sets attribute on a literal result element. The value of the xsl:use-attribute-sets attribute is a whitespace-separated list of names of attribute sets. The xsl:use-attribute-sets attribute has the same effect as the use-attribute-sets attribute on &lt;xsl:element&gt; with the additional rule that attributes specified on the literal result element itself are treated as if they were specified by &lt;xsl:attribute&gt; elements before any actual &lt;xsl:attribute&gt; elements but after any &lt;xsl:attribute&gt; elements implied by the xsl:use-attribute-sets attribute. Thus, for a literal result element, attributes from attribute sets named in an xsl:use-attribute-sets attribute will be added first, in the order listed in the attribute; next, attributes specified on the literal result element will be added; finally, any attributes specified by &lt;xsl:attribute&gt; elements will be added. Since adding an attribute to an element replaces any existing attribute of that element with the same name, this means that attributes specified in attribute sets can be overridden by attributes specified on the literal result element itself.</p>
+					<p>The template within each &lt;xsl:attribute&gt; element in an <b>&lt;xsl:attribute-set&gt;</b> element is instantiated each time the attribute set is used; it is instantiated using the same current node and current node list as is used for instantiating the element bearing the use-attribute-sets or xsl:use-attribute-sets attribute. However, it is the position in the style sheet of the &lt;xsl:attribute&gt; element rather than of the element bearing the use-attribute-sets or xsl:use-attribute-sets attribute that determines which variable bindings are visible; thus, only variables and parameters declared by top-level &lt;xsl:variable&gt; and &lt;xsl:param&gt; elements are visible.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-attribute-set/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-call-template"
+						name="xsl:call-template"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-call-template">xsl:call-template</a> <br/>
+                                  &#160;&#160;<b>name</b> = <var>qname</var>&gt;<br/>
+
+                                  &#160;&#160;&lt;!-- Content: <a
+                                  href="http://www.w3.org/TR/xslt#element-with-param">xsl:with-param</a>* --&gt;<br/>
+                                  &lt;/xsl:call-template&gt;</code></p>
+
+                                </syntax>
+				<description>Invokes a template by name.</description>
+				<remarks>
+					<p>The <b>&lt;xsl:call-template&gt;</b> enables you to invoke a named template an &lt;xsl:template&gt; element with an assigned name attribute. If an &lt;xsl:template&gt; element has a name attribute, it may, but need not, also have a match attribute. An <b>&lt;xsl:call-template&gt;</b> element invokes a template by name; it has a required name attribute that identifies the template to be invoked. Unlike &lt;xsl:apply-templates&gt;, <b>&lt;xsl:call-template&gt;</b> does not change the current node or the current node-list.</p>
+					<p>An error occurs if a style sheet contains more than one template with the same name.</p>
+					<p>An <b>&lt;xsl:call-template&gt;</b> element can contain any number of &lt;xsl:with-param&gt; elements. However, it cannot contain other XSLT elements.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-call-template/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-choose"
+						name="xsl:choose"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-choose">xsl:choose</a>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: (<a href="http://www.w3.org/TR/xslt#element-when">xsl:when</a>+, <a
+                                  href="http://www.w3.org/TR/xslt#element-otherwise">xsl:otherwise</a>?) --&gt;<br/>
+
+                                  &lt;/xsl:choose&gt;</code></p>
+                                </syntax>
+				<description>Provides multiple conditional testing in conjunction with the &lt;xsl:otherwise&gt; and &lt;xsl:when&gt; elements.</description>
+				<remarks>
+					<p>The &lt;xsl:when&gt; children of the <b>&lt;xsl:choose&gt;</b> element are tested in order from top to bottom until a test attribute on one of these elements accurately describes conditions present in the source data or an &lt;xsl:otherwise&gt; element is reached. Once an &lt;xsl:when&gt; or &lt;xsl:otherwise&gt; element is chosen, the <b>&lt;xsl:choose&gt;</b> block is exited. No explicit break or exit statement is required.</p>
+					<p>For simple conditional testing, use the &lt;xsl:if&gt; element.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-choose-when-otherwise/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-comment"
+						name="xsl:comment"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-comment">xsl:comment</a>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+                                  &lt;/xsl:comment&gt;</code></p>
+                                </syntax>
+				<description>Generates a comment in the output.</description>
+				<remarks>
+					<p>The text generated by the children of <b>&lt;xsl:comment&gt;</b> appears between the starting characters &lt;!-- and the closing characters --&gt;.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-comment/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-copy"
+						name="xsl:copy"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-copy">xsl:copy</a> <br/>
+                                  &#160;&#160;use-attribute-sets = <var>qnames</var>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+                                  &lt;/xsl:copy&gt;</code></p>
+                                </syntax>
+				<description>Copies the current node from the source to the output.</description>
+				<remarks>
+					<p>The <b>&lt;xsl:copy&gt;</b> element creates a node in the output with the same name, namespace, and type as the current node. Attributes and children are not copied automatically. This element makes identity transformation possible.</p>
+				</remarks>
+			</info> 
+			<xml id="books-copy-sample" src="elements/xsl-copy/data.xml"/> 
+			<xslt id="xslt" src="elements/xsl-copy/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-copy-of"
+						name="xsl:copy-of"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-copy-of">xsl:copy-of</a> <br/>
+
+                                  &#160;&#160;<b>select</b> = <var>expression</var>&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>Inserts sub-trees and result tree fragments into the result tree.</description>
+				<remarks>
+					<p>When the result of evaluating the expression is a result tree fragment, the complete fragment is copied into the result tree. When the result is a node-set, all the nodes in the set are copied in document order into the result tree; copying an element node copies the attribute nodes, namespace nodes, and children of the element node as well as the element node itself. A root node is copied by copying its children. When the result is neither a node-set nor a result tree fragment, the result is converted to a string and then inserted into the result tree, as with &lt;xsl:value-of&gt;.</p>
+				</remarks>
+			</info> 
+			<xml id="books-copy-of-sample" src="elements/xsl-copy-of/data.xml"/> 
+			<xslt id="xslt" src="elements/xsl-copy-of/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-decimal-format"
+						name="xsl:decimal-format"
+						test-date=""
+						test="">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: top-level-element
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-decimal-format">xsl:decimal-format</a> <br/>
+                                  &#160;&#160;name = <var>qname</var> <br/>
+                                  &#160;&#160;decimal-separator = <var>char</var> <br/>
+
+                                  &#160;&#160;grouping-separator = <var>char</var> <br/>
+                                  &#160;&#160;infinity = <var>string</var> <br/>
+                                  &#160;&#160;minus-sign = <var>char</var> <br/>
+                                  &#160;&#160;NaN = <var>string</var> <br/>
+                                  &#160;&#160;percent = <var>char</var> <br/>
+
+                                  &#160;&#160;per-mille = <var>char</var> <br/>
+                                  &#160;&#160;zero-digit = <var>char</var> <br/>
+                                  &#160;&#160;digit = <var>char</var> <br/>
+                                  &#160;&#160;pattern-separator = <var>char</var>&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>The xsl:decimal-format element declares a decimal-format, which controls the interpretation of a format pattern used by the format-number function.</description>
+				<remarks>
+					<p>Declares a decimal-format, which controls the interpretation of a format pattern used by the format-number function. If there is a name attribute, then the element declares a named decimal-format; otherwise, it declares the default decimal-format. The value of the name attribute is a Qname (qualified name). It is an error to declare either the default decimal-format or a decimal-format with a given name more than once (even with different import precedence), unless it is declared every time with the same value for all attributes (taking into account any default values).</p>
+				</remarks>
+			</info> 
+			<xml use="books"/>
+			<xslt id="xslt" src="elements/xsl-decimal-format/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-element"
+						name="xsl:element"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-element">xsl:element</a> <br/>
+                                  &#160;&#160;<b>name</b> = { <var>qname</var> }<br/>
+                                  &#160;&#160;namespace = { <var>uri-reference</var> }<br/>
+
+                                  &#160;&#160;use-attribute-sets = <var>qnames</var>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+                                  &lt;/xsl:element&gt;</code></p>
+                                </syntax>
+				<description>Creates an element with the specified name in the output.</description>
+				<remarks>
+					<p>The <b>&lt;xsl:element&gt;</b> element allows an element to be created with a computed name. The name of the element to be created is specified by a required name attribute and an optional namespace attribute. The content of the <b>&lt;xsl:element&gt;</b> element is a template for the attributes and children of the created element.</p>
+					<p>This element provides an escaping mechanism for creating elements with namespace clashes, such as XSLT itself.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/>
+			<xslt id="xslt" src="elements/xsl-element/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-for-each"
+						name="xsl:for-each"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-for-each">xsl:for-each</a> <br/>
+                                  &#160;&#160;<b>select</b> = <var>node-set-expression</var>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: (<a href="http://www.w3.org/TR/xslt#element-sort">xsl:sort</a>*,
+                                  <var>template</var>) --&gt;<br/>
+
+                                  &lt;/xsl:for-each&gt;</code></p>
+                                </syntax>
+				<description>Applies a template repeatedly, applying it in turn to each node in a set.</description>
+				<remarks>
+					<p>The <b>&lt;xsl:for-each&gt;</b> element establishes the context for iteration; the XSLT transformation instructions within this loop are to be applied to the selected nodes. Each source element selected by <b>&lt;xsl:for-each&gt;</b> becomes a new context against which any pattern matching within the <b>&lt;xsl:for-each&gt;</b> occurs.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-for-each/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-if"
+						name="xsl:if"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-if">xsl:if</a> <br/>
+                                  &#160;&#160;<b>test</b> = <var>boolean-expression</var>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+
+                                  &lt;/xsl:if&gt;</code></p>
+                                </syntax>
+				<description>Allows simple conditional template fragments.</description>
+				<remarks>
+					<p>The content is a template. The expression is evaluated, and the resulting object is converted to a Boolean. If the result is True, the content template is instantiated; otherwise, nothing is created.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-if/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-import"
+						name="xsl:import"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;<a
+                                  href="http://www.w3.org/TR/xslt#element-import">xsl:import</a> <br/>
+                                  &#160;&#160;<b>href</b> = <var>uri-reference</var>&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>Imports another XSLT style sheet.</description>
+				<remarks>
+					<p>An XSLT style sheet may import another XSLT style sheet using an <b>&lt;xsl:import&gt;</b> element. Importing a style sheet is the same as including it except that definitions and template rules in the importing style sheet take precedence over template rules and definitions in the imported style sheet. The <b>&lt;xsl:import&gt;</b> element has an href attribute whose value is a URI reference identifying the style sheet to be imported. A relative URI is resolved relative to the base URI of the <b>&lt;xsl:import&gt;</b> element.</p>
+					<p>The <b>&lt;xsl:import&gt;</b> element is allowed only as a top-level element. The <b>&lt;xsl:import&gt;</b> element children must precede all other element children of an &lt;xsl:stylesheet&gt; element, including any &lt;xsl:include&gt; element children. When &lt;xsl:include&gt; is used to include a style sheet, any <b>&lt;xsl:import&gt;</b> elements in the included document are moved up in the included document to follow any existing <b>&lt;xsl:import&gt;</b> elements in the included document.</p>
+					<p>The &lt;xsl:stylesheet&gt; elements encountered during processing of a style sheet that contains <b>&lt;xsl:import&gt;</b> elements are treated as forming an import tree. In the import tree, each &lt;xsl:stylesheet&gt; element has one import child for each <b>&lt;xsl:import&gt;</b> element that it contains. Any &lt;xsl:include&gt; elements are resolved before constructing the import tree. An xsl:stylesheet element in the import tree is defined to have lower import precedence than another &lt;xsl:stylesheet&gt; element in the import tree if it would be visited before that &lt;xsl:stylesheet&gt; element in a post-order traversal of the import tree (that is, a traversal of the import tree in which an &lt;xsl:stylesheet&gt; element is visited after its import children). Each definition and template rule has import precedence determined by the &lt;xsl:stylesheet&gt; element that contains it.</p>
+					<p>
+					<p>For example, suppose the following conditions are true:</p>
+						<ul>
+						<li>style sheet A imports style sheets B and C in that order</li>
+						<li>style sheet B imports style sheet D</li>
+						<li>style sheet C imports style sheet E</li>
+						</ul>
+					</p>
+					<p>The order of import precedence (lowest first) is D, B, E, C, A.</p>
+					<p><b>Note</b>   Because <b>&lt;xsl:import&gt;</b> elements are required to occur before any definitions or template rules, an implementation that processes imported style sheets at the point at which it encounters the <b>&lt;xsl:import&gt;</b> element will encounter definitions and template rules in increasing order of import precedence.</p>
+					<p>In general, a definition or template rule with higher import precedence takes precedence over a definition or template rule with lower import precedence. This is defined in detail for each kind of definition and for template rules.</p>
+					<p>It is an error if a style sheet directly or indirectly imports itself. Apart from this, the case where a style sheet with a particular URI is imported in multiple places is not treated specially. The import tree will have a separate &lt;xsl:stylesheet&gt; element for each place that it is imported.</p>
+					<p><b>Note</b>   If &lt;xsl:apply-imports&gt; is used, the behavior may be different from the behavior if the style sheet had been imported only at the place with the highest import precedence.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-import/sample.xsl" name="sample.xsl"/> 
+			<xslt id="import" src="elements/xsl-import/sample-import.xsl" name="sample-import.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-include"
+						name="xsl:include"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: top-level-element
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-include">xsl:include</a> <br/>
+
+                                  &#160;&#160;<b>href</b> = <var>uri-reference</var>&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>Specifies an XSLT style sheet to include.</description>
+				<remarks>
+					<p>An XSLT style sheet can include another XSLT style sheet using the <b>&lt;xsl:include&gt;</b> element. The href attribute value is a URI reference identifying the style sheet to be included. The relative URI is resolved with relation to the base URI of the <b>&lt;xsl:include&gt;</b> element.</p>
+					<p>The <b>&lt;xsl:include&gt;</b> element is only allowed as the child of the &lt;xsl:stylesheet&gt; element.</p>
+					<p>Inclusions are processed in MSXML as if they occurred at the tree level, Note that this is not the same as the DOM view of the XML tree. The resource located by the href attribute value is parsed as an XML document, and the children of the &lt;xsl:stylesheet&gt; element in this document replace the <b>&lt;xsl:include&gt;</b> element in the including document. The fact that template rules or definitions are included does not affect the way they are processed.</p>
+					<p>An error occurs if a style sheet directly or indirectly includes itself.</p>
+					<p>Including a style sheet multiple times can cause errors because of duplicate definitions. Such multiple inclusions are less obvious when they are indirect. For example, if style sheet B includes style sheet A, style sheet C includes style sheet A, and style sheet D includes both style sheet B and style sheet C, then A will be included indirectly by D twice. If all of B, C, and D is used as independent style sheets, the error can be avoided by separating everything in B other than the inclusion of A into a separate style sheet B<sup>1</sup> and changing B to contain just inclusions of B<sup>1</sup> and A, doing the same for C, and then changing D to include A, B<sup>1</sup>, C<sup>1</sup>.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-include/sample.xsl" name="sample.xsl"/> 
+			<xslt id="include" src="elements/xsl-include/sample-include.xsl" name="sample-include.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-key"
+						name="xsl:key"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: top-level-element
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-key">xsl:key</a> <br/>
+                                  &#160;&#160;<b>name</b> = <var>qname</var> <br/>
+
+                                  &#160;&#160;<b>match</b> = <var>pattern</var> <br/>
+                                  &#160;&#160;<b>use</b> = <var>expression</var>&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>
+					<p>The <b>&lt;xsl:key&gt;</b> element declares a named key for use with the key() function in XPath expressions for enabling easier access into complex XML documents. Keys are top-level elements, which means they cannot appear within a template.</p>
+				</description>
+				<remarks>
+					<p>The <b>&lt;xsl:key&gt;</b> element provides an alternative mechanism for addressing elements within an XML document. In effect, keys create a directory of specific elements from an XML source document, with the values generated from the use expressions referring to those elements. The primary difference between a key and an id is that an id must be a fixed qualified name, while a key can be created from either one or several concatenated expressions. </p>
+					<p>The <b>&lt;xsl:key&gt;</b> element is designed to be used with the XPath key() function. The key() function takes two arguments - the name of the key and its value- and then either retrieves the node or nodes associated with that key-value pair, or returns an empty node-set if no matching element is found. Unlike id elements, a key() expression may be matched by more than one node. </p>
+					<p>It is possible, of course, to create an XPath expression that retrieves the same data a key would, but when working with relatively large XML documents, a key is often faster because it essentially indexes the locations of the desired data ahead of time. </p>
+					<p>While the XSLT parser compiles the search expressions for the key element ahead of time, the current implementation does not explicitly create the index unless a key() function is encountered. This guarantees that if a transformation bypasses the key() function call then the initial time-intensive indexing is not performed. Note also that, in accordance with the W3C specifications, parameter or variable references cannot be used as part of a <b>&lt;xsl:key&gt;</b> match, ostensibly to avoid circular references.</p>
+				</remarks>
+			</info> 
+			<xml id="books-key-sample" src="elements/xsl-key/data.xml"/> 
+			<xslt id="xslt" src="elements/xsl-key/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-message"
+						name="xsl:message"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-message">xsl:message</a> <br/>
+
+                                  &#160;&#160;terminate = "yes" | "no"&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+                                  &lt;/xsl:message&gt;</code></p>
+                                </syntax>
+				<description>
+					<p>The <b>&lt;xsl:message&gt;</b> element sends a text message to either the message buffer or a message dialog box, depending upon the environment in which the element call is made. It also raises a system-level error message that can be trapped through normal error-handling mechanisms.</p>
+				</description>
+				<remarks>
+					<p>The <b>&lt;xsl:message&gt;</b> element provides a mechanism to debug XSLT style sheets in progress. Whenever an <b>&lt;xsl:message&gt;</b> element is encountered, if the terminate flag is set to "yes" (the default case), then the XSLT processor quits, and sends a system-level error message. Expressions contained within the <b>&lt;xsl:message&gt;</b> element evaluate relative to the current context, making message a good way of watching individual elements.</p>
+					<p>If terminate is set to "no", then the MSXML3 parser ignores the command. This is a good way of disabling error handling without removing it entirely from your XSL style sheet, although upcoming implementations may send such messages out to a log file (this is not currently supported).</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-message/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-number"
+						name="xsl:number"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-number">xsl:number</a> <br/>
+                                  &#160;&#160;level = "single" | "multiple" | "any"<br/>
+                                  &#160;&#160;count = <var>pattern</var> <br/>
+
+                                  &#160;&#160;from = <var>pattern</var> <br/>
+                                  &#160;&#160;value = <var>number-expression</var> <br/>
+                                  &#160;&#160;format = { <var>string</var> }<br/>
+                                  &#160;&#160;lang = { <var>nmtoken</var> }<br/>
+
+                                  &#160;&#160;letter-value = { "alphabetic" | "traditional" }<br/>
+                                  &#160;&#160;grouping-separator = { <var>char</var> }<br/>
+                                  &#160;&#160;grouping-size = { <var>number</var> }&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>Inserts a formatted number into the result tree.</description>
+				<remarks>
+					<p>The number to be inserted is specified by an expression contained in the value attribute. The expression is evaluated and the resulting object is converted to a number. The number is rounded to an integer and then converted to a string and inserted in the result tree.</p>
+					<p>The <b>&lt;xsl:number&gt;</b> element first constructs a list of positive integers using the level, count and from attributes:</p>
+					<ul>
+					<li>When level="single", it goes up to the first node in the ancestor-or-self axis that matches the count pattern, and constructs a list of length one containing one plus the number of preceding siblings of that ancestor that match the count pattern. If there is no such ancestor, it constructs an empty list. If the from attribute is specified, then the only ancestors that are searched are those that are descendants of the nearest ancestor that matches the from pattern. Preceding-siblings has the same meaning here as with the preceding-sibling axis.</li>
+					<li>When level="multiple", it constructs a list of all ancestors of the current node in document order followed by the element itself; it then selects from the list those nodes that match the count pattern; it then maps each node in the list to one plus the number of preceding siblings of that node that match the count pattern. If the from attribute is specified, then the only ancestors that are searched are those that are descendants of the nearest ancestor that matches the from pattern. Preceding siblings has the same meaning here as with the preceding-sibling axis.</li>
+					<li>When level="any", it constructs a list of length one containing the number of nodes that match the count pattern and belong to the set containing the current node and all nodes at any level of the document that are before the current node in document order, excluding any namespace and attribute nodes (in other words the union of the members of the preceding and ancestor-or-self axes). If the from attribute is specified, then only nodes after the first node before the current node that match the from pattern are considered.</li>
+					</ul>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-number/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-otherwise"
+						name="xsl:otherwise"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;<a
+                                  href="http://www.w3.org/TR/xslt#element-otherwise">xsl:otherwise</a>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+
+                                  &lt;/xsl:otherwise&gt;</code></p>
+                                </syntax>
+				<description><p>Provides multiple conditional testing in conjunction with the &lt;xsl:choose&gt; and &lt;xsl:when&gt; elements.</p></description>
+				<remarks>
+					<p>Provides a default condition for &lt;xsl:choose&gt;. Other alternatives are indicated by &lt;xsl:when&gt; elements.</p>
+					<p>For simple conditional testing, use the &lt;xsl:if&gt; element.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-choose-when-otherwise/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-output"
+						name="xsl:output"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: top-level-element
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-output">xsl:output</a> <br/>
+                                  &#160;&#160;method = "xml" | "html" | "text" |
+                                  <var>qname-but-not-ncname</var> <br/>
+                                  &#160;&#160;version = <var>nmtoken</var> <br/>
+                                  &#160;&#160;encoding = <var>string</var> <br/>
+
+                                  &#160;&#160;omit-xml-declaration = "yes" | "no"<br/>
+                                  &#160;&#160;standalone = "yes" | "no"<br/>
+                                  &#160;&#160;doctype-public = <var>string</var> <br/>
+                                  &#160;&#160;doctype-system = <var>string</var> <br/>
+                                  &#160;&#160;cdata-section-elements = <var>qnames</var> <br/>
+                                  &#160;&#160;indent = "yes" | "no"<br/>
+
+                                  &#160;&#160;media-type = <var>string</var>&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>Specifies options for use in serializing the result tree.</description>
+				<remarks>
+					<p>A style sheet may contain multiple <b>&lt;xsl:output&gt;</b> elements and may include style sheets that also contain <b>&lt;xsl:output&gt;</b> elements. All the <b>&lt;xsl:output&gt;</b> elements occurring in a style sheet are merged into a single effective <b>&lt;xsl:output&gt;</b> element. It is an error if there is more than one such value for an attribute. The values of attributes are defaulted after the <b>&lt;xsl:output&gt;</b> elements have been merged; different output methods may have different default values for an attribute.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-output/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-param"
+						name="xsl:param"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: top-level-element
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-param">xsl:param</a> <br/>
+                                  &#160;&#160;<b>name</b> = <var>qname</var> <br/>
+                                  &#160;&#160;select = <var>expression</var>&gt;<br/>
+
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+                                  &lt;/xsl:param&gt;</code></p>
+                                </syntax>
+				<description>Declares a named parameter for use within an xsl:stylesheet or xsl:template. Allows specification of a default value.</description>
+				<remarks>
+					<p>The value specified on the <b>&lt;xsl:param&gt;</b> element is a default value for binding. When the template or style sheet containing <b>&lt;xsl:param&gt;</b> is invoked, parameters are passed that are used in place of the default values.</p>
+					<p>The value of the parameter can be an object of any type that can be returned by an expression. The <b>&lt;xsl:param&gt;</b> element can specify the value of the variable in three alternative ways:</p>
+					<p><ul>
+						<li>If the element has a select attribute, the value of the attribute must be an expression and the value of the parameter is the object that results from evaluating the expression. In this case, the content of the element must be empty.</li>
+						<li>If the element does not have a select attribute and has non-empty content such as one or more child nodes, the content specifies the value. The content is a template that is instantiated to give the value of the parameter. The value is a result tree fragment equivalent to a node-set containing just a single root node having as children the sequence of nodes produced by instantiating the template. The base URI of the nodes in the result tree fragment is the base URI of the element.</li>
+					</ul></p>
+					<p>An error occurs if a member of the sequence of nodes created by instantiating the template is an attribute node or a namespace node, because a root node cannot have an attribute node or a namespace node as a child.</p>
+					<p><ul>
+					<li>If the content is empty and does not have a select attribute, the value of the parameter is an empty string.</li>
+					</ul></p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-param/sample.xsl" name="sample.xsl"/> 
+			<script id="js" src="elements/xsl-param/runit.js" name="runit.js"/>
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-preserve-space"
+						name="xsl:preserve-space"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: top-level-element
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-preserve-space">xsl:preserve-space</a> <br/>
+                                  &#160;&#160;<b>elements</b> = <var>tokens</var>&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>Preverves whitespace in a document.</description>
+				<remarks>
+					<p><b>&lt;xsl:preserve-space&gt;</b> is a whitespace-preserving element and has an elements attribute whose value is a whitespace-separated list of name tests. Initially, the set of whitespace-preserving element names contains all element names. If an element name matches a name test in an &lt;xsl:strip-space&gt; element, then it is removed from the set of whitespace-preserving element names. If an element name matches a name test in an <b>&lt;xsl:preserve-space&gt;</b> element, then it is added to the set of whitespace-preserving element names. An element matches a name test if and only if the name test would be true for the element as an XML Path Language (XPath) node test. The applicable match for a particular element name is determined as follows:</p>
+					<p><ul>
+						<li>First, any match with lower import precedence than another match is ignored.</li>
+						<li>Next, any match with a name test that has a lower default priority than the default priority of the name test of another match is ignored.</li>
+						<li>It is an error if this leaves more than one match.</li>
+					</ul></p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-preserve-space/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-processing-instruction"
+						name="xsl:processing-instruction"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-processing-instruction">xsl:processing-instruction</a>
+                                  <br/>
+                                  &#160;&#160;<b>name</b> = { <var>ncname</var> }&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+
+                                  &lt;/xsl:processing-instruction&gt;</code></p>
+                                </syntax>
+				<description>Generates a processing instruction in the output.</description>
+				<remarks>
+					<p>The <b>&lt;xsl:processing-instruction&gt;</b> element generates a processing instruction in the output. The name is indicated by the name attribute. The content of the element provides the rest of the processing instruction.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-processing-instruction/sample.xsl" name="sample.xsl"/> 
+			<xslt id="xslt" src="elements/xsl-processing-instruction/sort.xsl" name="sort.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-script"
+						name="msxsl:script"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Appears at the top level of the style sheet and contains script blocks that define global variables and functions for script extensions.</description>
+				<remarks>
+					<p>Belongs to the namespace urn:schemas-microsoft-com:xslt. You can declare variables and define functions within the <b>&lt;msxsl:script&gt;</b> element. This can appear within the &lt;xsl:stylesheet&gt; element. A script block thus nested is treated as a global script block.</p>
+					<p>You can also instantiate COM objects in the <b>&lt;msxsl:script&gt;</b> element. However, a user's security settings may prevent your script from instantiating a client-side object.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/msxsl-script/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-sort"
+						name="xsl:sort"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;<a
+                                  href="http://www.w3.org/TR/xslt#element-sort">xsl:sort</a> <br/>
+                                  &#160;&#160;select = <var>string-expression</var> <br/>
+                                  &#160;&#160;lang = { <var>nmtoken</var> }<br/>
+                                  &#160;&#160;data-type = { "text" | "number" | <var>qname-but-not-ncname</var>
+
+                                  }<br/>
+                                  &#160;&#160;order = { "ascending" | "descending" }<br/>
+                                  &#160;&#160;case-order = { "upper-first" | "lower-first"
+                                  }&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>Specifies sort criteria for node lists selected by xsl:for-each or xsl:apply-templates.</description>
+				<remarks>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-sort/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-strip-space"
+						name="xsl:strip-space"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: top-level-element
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-strip-space">xsl:strip-space</a> <br/>
+                                  &#160;&#160;<b>elements</b> = <var>tokens</var>&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>Strips whitespace in a document.</description>
+				<remarks>
+					<p><b>&lt;xsl:strip-space&gt;</b> is a whitespace-preserving element and has an elements attribute whose value is a whitespace-separated list of name tests. Initially, the set of whitespace-preserving element names contains all element names. If an element name matches a name test in an <b>&lt;xsl:strip-space&gt;</b> element, then it is removed from the set of whitespace-preserving element names. If an element name matches a name test in an &lt;xsl:preserve-space&gt; element, then it is added to the set of whitespace-preserving element names. An element matches a name test if and only if the name test would be true for the element as an XML Path Language (XPath) node test. The applicable match for a particular element name is determined as follows:</p>
+					<p><ul>
+						<li>First, any match with lower import precedence than another match is ignored.</li>
+						<li>Next, any match with a name test that has a lower default priority than the default priority of the name test of another match is ignored.</li>
+						<li>It is an error if this leaves more than one match.</li>
+					</ul></p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-strip-space/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-stylesheet"
+						name="xsl:stylesheet"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;<a
+                                  href="http://www.w3.org/TR/xslt#element-stylesheet">xsl:stylesheet</a> <br/>
+                                  &#160;&#160;id = <var>id</var> <br/>
+                                  &#160;&#160;extension-element-prefixes = <var>tokens</var> <br/>
+                                  &#160;&#160;exclude-result-prefixes = <var>tokens</var> <br/>
+                                  &#160;&#160;<b>version</b> = <var>number</var>&gt;<br/>
+
+                                  &#160;&#160;&lt;!-- Content: (<a href="http://www.w3.org/TR/xslt#element-import">xsl:import</a>*,
+                                  <var>top-level-elements</var>) --&gt;<br/>
+                                  &lt;/xsl:stylesheet&gt;</code></p>
+                                </syntax>
+				<description>The document element of a style sheet, containing all other style sheet elements.</description>
+				<remarks>
+					<p>A style sheet contains the <b>&lt;xsl:stylesheet&gt;</b> element. This element can have a set of &lt;xsl:template&gt; elements representing different output templates. Processing begins by processing the root template, indicated by the pattern "/".</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-stylesheet/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-template"
+						name="xsl:template"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: top-level-element
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-template">xsl:template</a> <br/>
+                                  &#160;&#160;match = <var>pattern</var> <br/>
+
+                                  &#160;&#160;name = <var>qname</var> <br/>
+                                  &#160;&#160;priority = <var>number</var> <br/>
+                                  &#160;&#160;mode = <var>qname</var>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: (<a href="http://www.w3.org/TR/xslt#element-param">xsl:param</a>*,
+                                  <var>template</var>) --&gt;<br/>
+
+                                  &lt;/xsl:template&gt;</code></p>
+                                </syntax>
+				<description>Defines a reuseable template for generating the desired output for nodes of a particular type and context.</description>
+				<remarks>
+					<p>Note that the template need not generate a complete XML document (even the root template, unless using transformNodeToObject), but only a fragment of XML. It is possible to include unenclosed text or multiple document elements defined by the template. This facilitates the generation of raw text and XML fragments that can be further processed by an application (for example, HTML fragments inserted into an HTML page).</p>
+					<p>The value of the name attribute is a Qname that is expanded. If it has a prefix, it is expanded into a URI reference using the namespace declarations in effect on the attribute in which the name occurs. The expanded-name consisting of the local part of the name and the possibly null URI reference is used as the name of the template. The default namespace is not used for unprefixed names.</p>
+					<p>If an <b>&lt;xsl:template&gt;</b> element has a name attribute, it may, but need not, also have a match attribute. An &lt;xsl:call-template&gt; element invokes a template by name; it has a required name attribute that identifies the template to be invoked. Unlike &lt;xsl:apply-templates&gt;, &lt;xsl:call-template&gt; does not change the current node or the current node list.</p>
+					<p>An error occurs if a style sheet contains more than one template with the same name.</p>
+				</remarks>
+			</info> 
+			<xml id="books-template-sample" src="elements/xsl-template/data.xml"/> 
+			<xslt id="xslt" src="elements/xsl-template/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-text"
+						name="xsl:text"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-text">xsl:text</a> <br/>
+                                  &#160;&#160;disable-output-escaping = "yes" | "no"&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: #PCDATA --&gt;<br/>
+                                  &lt;/xsl:text&gt;</code></p>
+                                </syntax>
+				<description>Generates text in the output.</description>
+				<remarks>
+					<p>A text node is created for each <b>&lt;xsl:text&gt;</b> element appearing in a template. White space is stripped, and adjacent text nodes are automatically merged.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-text/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-transform"
+						name="xsl:transform"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;<a
+                                  href="http://www.w3.org/TR/xslt#element-transform">xsl:transform</a> <br/>
+
+                                  &#160;&#160;id = <var>id</var> <br/>
+                                  &#160;&#160;extension-element-prefixes = <var>tokens</var> <br/>
+                                  &#160;&#160;exclude-result-prefixes = <var>tokens</var> <br/>
+                                  &#160;&#160;<b>version</b> = <var>number</var>&gt;<br/>
+
+                                  &#160;&#160;&lt;!-- Content: (<a href="http://www.w3.org/TR/xslt#element-import">xsl:import</a>*,
+                                  <var>top-level-elements</var>) --&gt;<br/>
+                                  &lt;/xsl:transform&gt;</code></p>
+                                </syntax>
+				<description>The document element of a style sheet containing &lt;xsl:template&gt; and &lt;msxsl:script&gt; elements. Synonym for xsl:stylesheet.</description>
+				<remarks>
+					<p>A synonym for the &lt;xsl:stylesheet&gt; element. This element can have a set of <b>&lt;xsl:template&gt;</b> elements representing different output templates. Processing begins by processing the root template, indicated by the pattern "/".</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-transform/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-value-of"
+						name="xsl:value-of"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: instruction
+                                  --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-value-of">xsl:value-of</a> <br/>
+                                  &#160;&#160;<b>select</b> = <var>string-expression</var> <br/>
+
+                                  &#160;&#160;disable-output-escaping = "yes" | "no"&#160;<br/>/&gt;</code></p>
+                                </syntax>
+				<description>Inserts the value of the selected node as text.</description>
+				<remarks>
+					<p>The <b>&lt;xsl:value-of&gt;</b> element inserts a text string representing the value of the first element (in document order) specified by the select attribute.</p>
+					<p>If the XML Path Language (XPath) expression returns more than a single node, the <b>&lt;xsl:value-of&gt;</b> element returns the text of the first node returned (equivalent to the XMLDOMNode object's selectSingleNode method). If the node returned is an element with substructure, <b>&lt;xsl:value-of&gt;</b> returns the concatenated text nodes of that element's sub-tree with the markup removed.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-value-of/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-variable"
+						name="xsl:variable"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;!-- Category: top-level-element
+                                  --&gt;<br/>
+                                  &lt;!-- Category: instruction --&gt;<br/>
+                                  &lt;<a href="http://www.w3.org/TR/xslt#element-variable">xsl:variable</a> <br/>
+                                  &#160;&#160;<b>name</b> = <var>qname</var> <br/>
+
+                                  &#160;&#160;select = <var>expression</var>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+                                  &lt;/xsl:variable&gt;</code></p>
+                                </syntax>
+				<description>Specifies a value bound in an expression.</description>
+				<remarks>
+					<p>The value of the variable may be an object of any type that can be returned by an expression. The <b>&lt;xsl:variable&gt;</b> element can specify the value of the variable in three alternative ways:</p>
+					<p><ul>
+						<li>If the element has a select attribute, the value of the attribute must be an expression and the value of the variable is the object that results from evaluating the expression. In this case, the content of the element must be empty.</li>
+						<li>If the element does not have a select attribute and has non-empty content such as one or more child nodes, the content specifies the value. The content is a template that is instantiated to give the value of the variable. The value is a result tree fragment equivalent to a node-set containing just a single root node having as children the sequence of nodes produced by instantiating the template. The base URI of the nodes in the result tree fragment is the base Uniform Resource Identifier (URI) of the variable-binding element.</li>
+					</ul></p>
+					<p>An error occurs if a member of the sequence of nodes created by instantiating the template is an attribute node or a namespace node, because a root node cannot have an attribute node or a namespace node as a child.</p>
+					<p><ul>
+						<li>If the content is empty and does not have a select attribute, the value of the variable is an empty string.</li>
+					</ul></p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-variable/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-when"
+						name="xsl:when"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;<a
+                                  href="http://www.w3.org/TR/xslt#element-when">xsl:when</a> <br/>
+                                  &#160;&#160;<b>test</b> = <var>boolean-expression</var>&gt;<br/>
+
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+                                  &lt;/xsl:when&gt;</code></p>
+                                </syntax>
+				<description>Provides multiple conditional testing in conjunction with the &lt;xsl:choose&gt; and &lt;xsl:otherwise&gt; elements.</description>
+				<remarks>
+					<p>Describes one of the alternatives to be chosen by the &lt;xsl:choose&gt; element. The default alternative is described by the &lt;xsl:otherwise&gt; element.</p>
+					<p>For simple conditional testing, use the &lt;xsl:if&gt; element.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-choose-when-otherwise/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample> 
+		<sample id="sample-with-param"
+						name="xsl:with-param"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax>
+                                  <p class="element-syntax-summary"><code>&lt;<a
+                                  href="http://www.w3.org/TR/xslt#element-with-param">xsl:with-param</a> <br/>
+                                  &#160;&#160;<b>name</b> = <var>qname</var> <br/>
+
+                                  &#160;&#160;select = <var>expression</var>&gt;<br/>
+                                  &#160;&#160;&lt;!-- Content: <var>template</var> --&gt;<br/>
+                                  &lt;/xsl:with-param&gt;</code></p>
+                                </syntax>
+				<description>Passes a parameter to a template.</description>
+				<remarks>
+					<p>The required name attribute specifies the name of the parameter (the variable the value of whose binding is to be replaced). The <b>&lt;xsl:with-param&gt;</b> element is allowed within both &lt;xsl:call-template&gt; and &lt;xsl:apply-templates&gt;. 
+					The value of the parameter is specified in the same way as for &lt;xsl:variable&gt; and &lt;xsl:param&gt;. The current node and current node-list used for computing the value specified by the <b>&lt;xsl:with-param&gt;</b> element is the same as that used for the &lt;xsl:apply-templates&gt; or &lt;xsl:call-template&gt; element within which it occurs. It is not an error to pass a parameter x to a template that does not have an &lt;xsl:param&gt; element for x; the parameter is simply ignored.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="elements/xsl-with-param/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+	</group>
+	
+	<group id="xsl-functions" name="XSLT Functions">
+		<info>
+			<remarks>
+				<p>The XML Path Language (XPath) syntax supports functions to provide information about nodes in a collection. These functions return strings or numbers and can be used with comparison operators in filter patterns. These functions are not available from the DOM's selectNodes.</p>
+			</remarks>
+		</info>
+		<sample id="sample-current"
+						name="current()"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax></syntax>
+				<description>Returns a node-set that has the current node as its only member.</description>
+				<remarks>
+					<p>The function returns a node-set that has the current node as its only member. For an outermost expression (an expression not occurring within another expression), the current node is always the same as the context node. Thus,</p>
+					<p>&lt;xsl:value-of select="<b>current()</b>"/&gt;</p>
+					<p>is the same as</p>
+					<p>&lt;xsl:value-of select="."/&gt;</p>
+					<p>However, within square brackets, the current node is usually different from the context node. For example,</p>
+					<p>&lt;xsl:apply-templates select="//glossary/item[@name=<b>current()</b>/@ref]"/&gt;</p>
+					<p>processes all &lt;item&gt; elements that have a &lt;glossary&gt; parent element and a name attribute with value equal to the value of the current node's ref attribute. This is different from</p>
+					<p>&lt;xsl:apply-templates select="//glossary/item[@name=./@ref]"/&gt;</p>
+					<p>which means the same as</p>
+					<p>&lt;xsl:apply-templates select="//glossary/item[@name=@ref]"/&gt;</p>
+					<p>and so would process all &lt;item&gt; elements that have a &lt;glossary&gt; parent element and that have a name attribute and a ref attribute with the same value.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XSLTFunctions/current/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-document"
+						name="document()"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax></syntax>
+				<description>The document() function provides a way to retrieve other XML resources from within the XSL Transformations (XSLT) style sheet beyond the initial data provided by the input stream.</description>
+				<remarks>
+					<p>The <b>document()</b> function is quite versatile. Its effects vary depending upon the type and number of arguments that are used:</p>
+					<p><ul>
+						<li>If only one argument is provided and that argument is a string, then <b>document()</b> treats the string as a URL and retrieves the <b>document()</b> so referenced as a set of nodes.</li>
+						<li>If only one argument is provided and that argument is a node set, then each node in that node-set is treated as a URL and the function returns the union of all of the <b>document()</b>s so referenced.</li>
+						<li>With two arguments, the first argument could be either a string or a node-set while the second argument must be a node-set. The second argument, when supplied, serves to indicate the base URL to which the contents of the first argument are relative.</li>
+						<li>If an empty string is passed to the <b>document()</b> function, the result is the source XML of the XSLT <b>document()</b> itself, unless the second argument is given (and is not null). In the latter case, the URL of the <b>document()</b> is the base URL of the node contained in the second element.</li>
+					</ul></p>
+				</remarks>
+			</info> 
+			<xml id="books-document-sample" src="XSLTFunctions/document/data.xml"/> 
+			<xslt id="xslt" src="XSLTFunctions/document/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-element-available"
+						name="element-available()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns True only if the expanded-name is the name of an instruction.</description>
+				<remarks>
+					<p>The argument must evaluate to a string that is a QName. The QName is expanded into an expanded-name using the namespace declarations in scope for the expression. This function returns True for all XSLT elements supported in this release and False for each XSL Transformations (XSLT) element not supported in this release. In addition, it returns True for all extension elements supported in this release, currently only msxsl:script. Outside of XSLT, it will always return False.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XSLTFunctions/element-available/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-format-number"
+						name="format-number()"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax></syntax>
+				<description>Converts the first argument to a string using the format pattern string specified by the second argument.</description>
+				<remarks>
+					<p>For the "format pattern" string, the following characters are supported "."; ","; "#"; and "0". The "#" character is used to describe integers. The "." and "," characters are used to describe the location and type of punctuation. The "0" character is used enforce digits before and after the "." character.</p>
+					<p>When truncating digits to the right of the decimal points, the number is rounded. The number to the left of the decimal point is never truncated.</p>
+					<p>Both parameters must be present or an error will be thrown. If the first parameter cannot be coerced to a number, the function should return NaN. If the second parameter is not a valid pattern string, the number that is the first parameter is returned as is.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XSLTFunctions/format-number/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-function-available"
+						name="function-available()"
+						test-date="9-18"
+						test="ok"> 
+			<info>
+				<syntax></syntax>
+				<description>Returns True if the function is in the function library.</description>
+				<remarks>
+					<p>The argument must evaluate to a string that is a QName. The QName is expanded into an expanded-name using the namespace declarations in scope for the expression. The <b>function-available()</b> function returns True if and only if the expanded-name is the name of a function in the function library. If the expanded-name has a non-null namespace Uniform Resource Identifier (URI), it refers to an extension function; otherwise, it refers to a function defined by XML Path Language (XPath) or XSL Transformations (XSLT).</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XSLTFunctions/function-available/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-generate-id"
+						name="generate-id()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns a string that uniquely identifies the node in the argument node-set that is first in document order.</description>
+				<remarks>
+					<p>The unique identifier must consist of ASCII alphanumeric characters and must start with an alphabetic character. Thus the string is syntactically an XML name. There is no guarantee that a generated unique identifier will be distinct from any unique IDs specified in the source document. If the argument node-set is empty, the empty string is returned. If the argument is omitted, it defaults to the context node.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XSLTFunctions/generate-id/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-key-function"
+						name="key()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>The <b>key()</b> function retrieves elements previously marked with an xsl:key statement.</description>
+				<remarks>
+					<p>The <b>key()</b> function retrieves a node-set (zero or more nodes) that have the same key name and key value  specified in the &lt;xsl:key&gt; statement. When the XSL Transformations (XSLT) style sheet is first processed, the keys are stored internally to simplify access. Keys can simplify accessing nodes in the XML document, but may not be faster than using XML Path Language (XPath) to retrieve the same nodes.</p>
+				</remarks>
+			</info> 
+			<xml id="books-key-function-sample" src="XSLTFunctions/key/data.xml"/> 
+			<xslt id="xslt" src="XSLTFunctions/key/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-node-set-function"
+						name="msxsl:node-set()"
+						test-date=""
+						test="">
+			<info>
+				<syntax></syntax>
+				<description>Enables you to convert a tree into a node set. The resulting node always contains a single node and the root node of the tree.</description>
+				<remarks>
+					With earlier versions of MSXML, it was possible to use expressions such as &lt;xsl:for-each select="$var/el"&gt;, where var is an XSLT variable bound to a result tree. This approach, however, no longer works with MSXML 3.0. Instead, you can achieve the same results by using the <b>node-set</b> function
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XSLTFunctions/msxsl-node-set/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-unparsed-entity-uri"
+						name="unparsed-entity-uri()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>The unparsed-entity-uri function provides access to declarations of unparsed entities in the DTD of the source document. It returns the empty string if there is no such entity.</description>
+				<remarks>
+					<p>If the document containing the context node includes an unparsed entity that is specified in the string parameter of the <b>unparsed-entity-uri()</b> function, then a URI identifying that unparsed entity is returned. If there is no entity with this name, an empty string is returned.</p>
+				</remarks>
+			</info> 
+			<xml id="books-unparsed-sample" src="XSLTFunctions/unparsed-entity-uri/data.xml"/> 
+			<xslt id="xslt" src="XSLTFunctions/unparsed-entity-uri/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-system-property"
+						name="system-property()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns an object representing the value of the system property identified by the name.</description>
+				<remarks>
+					<p>The argument must evaluate to a string that is a valid QName. The QName is expanded into a name using the namespace declarations in scope for the expression. The <b>system-property()</b> function returns an object representing the value of the system property identified by the name. If there is no such system property, the empty string is returned.</p>
+					<p>Since these properties are strings representing QNames, a prefix must correspond to a namespace declaration in scope for "http://www.w3.org/1999/XSL/Transform" for the xsl:version, xsl:vendor, and xsl:vendor-url properties. A prefix corresponding to a namespace declaration "urn:schemas-microsoft-com:xslt" must be in scope for the msxsl:version property.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XSLTFunctions/system-property/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+	</group>
+
+	<group id="xpath-functions" name="XPath Functions">
+		<info>
+			<syntax></syntax>
+			<description></description>
+			<remarks>
+				<p>XML Path Language (XPath) functions are used to evaluate expressions.</p>
+				<p>Each function in the function library is specified using a function prototype, which gives the return type, the name of the function, and the type of the arguments. If an argument type is followed by a question mark, the argument is optional; otherwise, the argument is required. Function names are case-sensitive.</p>
+			</remarks>
+		</info> 
+		<sample id="sample-boolean"
+						name="boolean()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Converts the argument to a Boolean.</description>
+				<remarks>
+					<p>Converts its argument to a Boolean as follows:</p>
+					<p><ul>
+					<li>A number is True if and only if it is neither positive or negative zero or NaN.</li>
+					<li>A node-set is True if and only if it is non-empty.</li>
+					<li>A string is True if and only if its length is non-zero.</li>
+					<li>An object of a type other than the four basic types is converted to a Boolean in a way that is dependent on that type.</li>
+					</ul></p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/boolean-functions/boolean/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-false"
+						name="false()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns False.</description>
+				<remarks>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/boolean-functions/false/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-lang"
+						name="lang()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns True if the xml:lang attribute of the context node is the same as a sublanguage of the language specified by the argument string.</description>
+				<remarks>
+					<p>The language of the context node is determined by the value of the xml:lang attribute on the context node, or if the context node has no xml:lang attribute, by the value of the xml:lang attribute on the nearest ancestor of the context node that has an xml:lang attribute. If there is no such attribute, <b>lang()</b> returns False. If there is such an attribute, <b>lang()</b> returns True if the attribute value is equal to the argument (ignoring case) or if there is a suffix starting with "-", such that the attribute value is equal to the argument, ignoring the suffix of the attribute value and ignoring case.</p>
+				</remarks>
+			</info> 
+			<xml id="books-lang-sample" src="XPathFunctions/boolean-functions/lang/data.xml"/> 
+			<xslt id="xslt" src="XPathFunctions/boolean-functions/lang/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-not"
+						name="not()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>The <b>not</b> function returns true if its argument is false, and false otherwise.</description>
+				<remarks>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/boolean-functions/not/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-true"
+						name="true()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns True.</description>
+				<remarks>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/boolean-functions/true/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-count"
+						name="count()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the number of nodes in the argument node-set.</description>
+				<remarks>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/node-set-functions/count/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-id"
+						name="id()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Selects elements by their unique ID.</description>
+				<remarks>
+					<p>When the argument is of type node-set, the result is the union of the result of applying <b>id()</b> to the string value of each of the nodes in the argument node-set.</p>
+					<p>When the argument is of any other type, it is converted to a string and then split into a white space-separated list of tokens (white space is any sequence of characters matching the production); the result is a node-set containing the elements in the same document as the context node that have a unique ID equal to any of the tokens in the list.</p>
+					<p>The following selects the element with unique ID foo,</p>
+					<p>id("foo")</p>
+					<p>The following selects the fifth para child of the element with unique ID foo,</p>
+					<p>id("foo")/child::para[position()=5]</p>
+				</remarks>
+			</info> 
+			<xml id="books-id-sample" src="XPathFunctions/node-set-functions/id/data.xml"/> 
+			<xslt id="xslt" src="XPathFunctions/node-set-functions/id/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-last"
+						name="last()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns a number equal to context size of the expression evaluation context.</description>
+				<remarks>
+					<p>The following finds the last author for each book:</p>
+					<p>book/author[last()]</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/node-set-functions/last/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-local-name"
+						name="local-name()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the local part of the expanded name of the node in the argument node-set that is first in document order.</description>
+				<remarks>
+					<p>If the argument node-set is empty or the first node has no expanded name, an empty string is returned. If the argument is omitted, it defaults to a node-set with the context node as its only member.</p>
+				</remarks>
+			</info> 
+			<xml id="books-local-name-sample" src="XPathFunctions/node-set-functions/local-name/data.xml"/> 
+			<xslt id="xslt" src="XPathFunctions/node-set-functions/local-name/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-name"
+						name="name()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns a string containing a QName representing the expanded name of the node in the argument node-set that is first in document order.</description>
+				<remarks>
+					<p>The QName must represent the expanded name with respect to the namespace in effect on the node. This need not be the case if there are namespace declarations in effect on the node that associate multiple prefixes with the same namespace. If the argument node-set is empty or the first node has no expanded name, an empty string is returned. If the argument it omitted, it defaults to a node-set with the context node as its only member.</p>
+				</remarks>
+			</info> 
+			<xml id="books-name-sample" src="XPathFunctions/node-set-functions/name/data.xml"/> 
+			<xslt id="xslt" src="XPathFunctions/node-set-functions/name/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-namespace-uri"
+						name="namespace-uri()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the namespace Uniform Resource Identifier (URI) of the expanded name of the node in the argument node-set that is first in document order.</description>
+				<remarks>
+					<p>If the argument node-set is empty, the first node has no expanded name or the namespace URI of the expanded name is Null and an empty string is returned. If the argument is omitted, it defaults to a node-set with the context node as its only member.</p>
+					<p><b>Note</b>   The string returned will be empty except for element nodes and attribute nodes.</p>
+				</remarks>
+			</info> 
+			<xml id="books-namespace-uri-sample" src="XPathFunctions/node-set-functions/namespace-uri/data.xml"/> 
+			<xslt id="xslt" src="XPathFunctions/node-set-functions/namespace-uri/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-position"
+						name="position()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the index number of the node within the parent.</description>
+				<remarks>The first node returns a position of 1.
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/node-set-functions/position/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-ceiling"
+						name="ceiling()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the smallest integer that is not less than the argument.</description>
+				<remarks>
+					<p>The following function call returns 3:</p>
+					<p>ceiling(2.5)</p>
+					<p>The following function call returns -2:</p>
+					<p>ceiling(-2.3)</p>
+					<p>The following function call returns 4:</p>
+					<p>ceiling(4)</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/number-functions/ceiling/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-floor"
+						name="floor()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the largest integer that is not greater than the argument.</description>
+				<remarks>
+					<p>The following function call returns 3:</p>
+					<p>floor(3.5)</p>
+					<p>The following function call returns -2:</p>
+					<p>floor(-1.3)</p>
+					<p>The following function call returns 4:</p>
+					<p>floor(4)</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/number-functions/floor/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-number-function"
+						name="number()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Converts the argument to a number.</description>
+				<remarks>
+					<p>Converts its argument to a number as follows:</p>
+					<p><ul>
+					<li>A string that consists of optional white space followed by an optional minus sign followed by a number followed by white space is converted to the IEEE 754 number that is nearest (according to the IEEE 754 round-to-nearest rule) to the mathematical value represented by the string; any other string is converted to NaN.</li>
+					<li>Boolean True is converted to 1; Boolean False is converted to 0.</li>
+					<li>A node-set is first converted to a string and then converted in the same way as a string argument.</li>
+					<li>An object of a type other than the four basic types (node set, Boolean, number, or string) is converted to a number in a way that is dependent on that type.</li>
+					<li>If the argument is omitted, it defaults to a node-set with the context node as its only member.</li>
+					</ul></p>
+					<p><b>Note</b>   The function should not be used for conversion of numeric data occurring in an element in an XML document unless the element is of a type that represents numeric data in a language-neutral format (which would typically be transformed into a language-specific format for presentation to a user). In addition, the function cannot be used unless the language-neutral format used by the element is consistent with the XML Path Language (XPath) syntax for a number.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/number-functions/number/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-round"
+						name="round()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns an integer closest in value to the argument.</description>
+				<remarks>
+					<p>If there are two such numbers, the one that is closest to positive infinity is returned. If the argument is NaN, NaN is returned. If the argument is positive infinity, positive infinity is returned. If the argument is negative infinity, negative infinity is returned. If the argument is positive zero, positive zero is returned. If the argument is negative zero, negative zero is returned. If the argument is less than zero but greater than or equal to -0.5, negative zero is returned.</p>
+					<p>For these last two cases, the result of calling the <b>round()</b> function is not the same as the result of adding 0.5 and then calling the floor() function because positive zero will be returned in such cases.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/number-functions/round/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-sum"
+						name="sum()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the sum of all nodes in the node-set. Each node is first converted to a number value before summing.</description>
+				<remarks>
+					<p>Given the following XML document:</p>
+					<p>&lt;root&gt;</p>
+					<p>  &lt;a&gt;1&lt;/a&gt;</p>
+					<p>  &lt;a&gt;3&lt;/a&gt;</p>
+					<p>  &lt;a&gt;2&lt;/a&gt;</p>
+					<p>&lt;/root&gt;</p>
+					<p>the following function call returns 6,</p>
+					<p>sum(//a)</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/number-functions/sum/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-concat"
+						name="concat()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the concatenation of the arguments.</description>
+				<remarks>
+					<p>If an argument is not of type string, it is first converted to a string and then evaluated.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/string-functions/concat/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-contains"
+						name="contains()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns True if the first argument string contains the second argument string; otherwise returns False.</description>
+				<remarks>
+					<p>If an argument is not of type string, it is first converted to a string and then evaluated.</p>
+					<p>The following function call returns True:</p>
+					<p>contains("foobar", "oba")</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/string-functions/contains/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-normalize-space"
+						name="normalize-space()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the argument string with the white space stripped.</description>
+				<remarks>
+					<p>White space is normalized by stripping leading and trailing white space and replacing sequences of white space characters with a single space. If the argument is omitted, the string-value of the context node is normalized and returned.</p>
+					<p>The following function call returns "abc":</p>
+					<p>normalize-space("  abc  ")</p>
+					<p>If an argument is not of type string, it is first converted to a string and then evaluated.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/string-functions/normalize-space/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-starts-with"
+						name="starts-with()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns True if the first argument string starts with the second argument string; otherwise returns False.</description>
+				<remarks>
+					<p>If an argument is not of type string, it is first converted to a string and then evaluated.</p>
+					<p>The following function call returns True:</p>
+					<p>starts-with("foobar", "foo")</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/string-functions/starts-with/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-string"
+						name="string()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Converts an object to a string.</description>
+				<remarks>
+					<p>An object is converted to a string as follows:</p>
+					<p>A node-set is converted to a string by returning the string value of the node in the node-set that is first in document order. If the node-set is empty, an empty string is returned.</p>
+					<p>A number is converted to a string as follows:</p>
+					<p><ul>
+					<li>NaN is converted to the string NaN.</li>
+					<li>positive zero is converted to the string "0". </li>
+					<li>negative zero is converted to the string "0". </li>
+					<li>positive infinity is converted to the string "infinity". </li>
+					<li>negative infinity is converted to the string "-infinity". </li>
+					<li>if the number is an integer, the number is represented in decimal form as a number with no decimal point and no leading zeros, preceded by a minus sign (-) if the number is negative.</li>
+					<li>otherwise, the number is represented in decimal form as a number with a decimal point and at least one digit before the decimal point and at least one digit after the decimal point, preceded by a minus sign (-) if the number is negative; there must be no leading zeros before the decimal point, apart possibly from the one required digit immediately before the decimal point; beyond the one required digit after the decimal point there must be as many, but only as many, more digits as are needed to uniquely distinguish the number from all other IEEE 754 numeric values.</li>
+					</ul></p>
+					<p>The Boolean "false" value is converted to the string "false". The Boolean "true" value is converted to the string "true".</p>
+					<p>An object of a type other than the four basic types is converted to a string in a way that is dependent on that type.</p>
+					<p>If the argument is omitted, it defaults to a node-set with the context node as its only member.</p>
+					<p><b>Note</b>   The string function is not intended for converting numbers into strings for presentation to users. The format-number function and &lt;xsl:number&gt; element in XSL Transformations (XSLT) provide this functionality.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/string-functions/string/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-string-length"
+						name="string-length()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the number of characters in the string.</description>
+				<remarks>
+					<p>If the argument is omitted, it returns the number of characters in the string-value of the context node.</p>
+					<p>The following function call returns 4:</p>
+					<p>string-length("abcd")</p>
+					<p>If an argument is not of type string, it is first converted to a string and then evaluated.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/string-functions/string-length/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-substring"
+						name="substring()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the substring of the first argument starting at the position specified in the second argument and the length specified in the third argument.</description>
+				<remarks>
+					<p>Each character in the string is considered to have a numeric position: the position of the first character is 1, the position of the second character is 2, and so on.</p>
+					<p>If the third argument is not specified, it returns the substring starting at the position specified in the second argument and continuing to the end of the string.</p>
+					<p>The following function call returns "234":</p>
+					<p>substring("12345",2,3) </p>
+					<p>The following function call returns "2345":</p>
+					<p>substring("12345",2) </p>
+					<p>The returned substring contains those characters for which the position of the character is greater than or equal to the rounded value of the second argument, and if the third argument is specified, less than the sum of the rounded value of the second argument and the rounded value of the third argument. The comparisons and addition used for the above follow the standard IEEE 754 rules; rounding is done as if by a call to the round function.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/string-functions/substring/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-substring-after"
+						name="substring-after()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the substring of the first argument string that follows the first occurrence of the second argument string in the first argument string, or the empty string if the first argument string does not contain the second argument string.</description>
+				<remarks>
+					<p>If an argument is not of type string, it is first converted to a string and then evaluated.</p>
+					<p>The following function call returns "04/01":</p>
+					<p>substring-after("1999/04/01","/")</p>
+					<p>The following function call returns "99/04/01":</p>
+					<p>substring-after("1999/04/01","19")</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/string-functions/substring-after/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-substring-before"
+						name="substring-before()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the substring of the first argument string that precedes the first occurrence of the second argument string in the first argument string, or the empty string if the first argument string does not contain the second argument string.</description>
+				<remarks>
+					<p>If an argument is not of type string, it is first converted to a string and then evaluated.</p>
+					<p>The following function call returns "1999":</p>
+					<p>substring-before("1999/04/01","/")</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/string-functions/substring-before/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+		<sample id="sample-translate"
+						name="translate()"
+						test-date="9-18"
+						test="ok">
+			<info>
+				<syntax></syntax>
+				<description>Returns the first argument string with occurrences of characters in the second argument string replaced by the character at the corresponding position in the third argument string.</description>
+				<remarks>
+					<p>The following function call returns "BAr":</p>
+					<p>translate("bar","abc","ABC")</p>
+					<p>If there is a character in the second argument string with no character at a corresponding position in the third argument string (because the second argument string is longer than the third argument string), occurrences of that character in the first argument string are removed.</p>
+					<p>The following function call returns "AAA":</p>
+					<p>translate("--aaa--","abc-","ABC")</p>
+					<p>If a character occurs more than once in the second argument string, the first occurrence determines the replacement character. If the third argument string is longer than the second argument string, excess characters are ignored.</p>
+					<p>If an argument is not of type string, it is first converted to a string and then evaluated.</p>
+				</remarks>
+			</info> 
+			<xml use="books"/> 
+			<xslt id="xslt" src="XPathFunctions/string-functions/translate/sample.xsl" name="sample.xsl"/> 
+			<result views="browser html"/> 
+		</sample>
+	</group>
+</samples> 

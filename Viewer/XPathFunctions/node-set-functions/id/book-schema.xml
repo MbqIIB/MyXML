@@ -1,0 +1,25 @@
+<Schema name="books" xmlns="urn:schemas-microsoft-com:xml-data"
+           xmlns:dt="urn:schemas-microsoft-com:datatypes">
+	<ElementType name="author"/>
+	<ElementType name="title"/>
+	<ElementType name="genre"/>
+	<ElementType name="price"/>
+	<ElementType name="publish_date"/>
+	<ElementType name="description"/>
+	<AttributeType name="id" dt:type="id"/>
+		   
+	<ElementType name="catalog">
+		<element type="book"/>
+	</ElementType>
+		   
+	<ElementType name="book" model="closed" content="eltOnly">
+		<attribute type="id"/>
+		<element type="author"/>
+		<element type="title"/>
+		<element type="genre"/>
+		<element type="price"/>
+		<element type="publish_date"/>
+		<element type="description"/>
+	</ElementType>
+</Schema>
+  

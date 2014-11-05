@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE catalog [
+<!ELEMENT catalog ANY>
+<!ELEMENT book ANY>
+<!ELEMENT title ANY>
+<!NOTATION JPEG SYSTEM "urn:foo">
+<!ENTITY pic SYSTEM "somepic.jpg" NDATA JPEG>
+]>
+<catalog>
+<book>
+	<title>XML Developer's Guide</title>
+</book>
+<book>
+	<title>Midnight Rain</title>
+</book>
+</catalog>

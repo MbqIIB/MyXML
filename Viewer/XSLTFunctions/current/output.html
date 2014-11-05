@@ -1,0 +1,30 @@
+<html>
+<body>
+<table border="1">
+<tr>
+<td valign="top"><b>select="current()/author"</b><br><i>Uses current(), here the same as context node (.)</i></td>
+<td valign="top"><b>select="./title"</b><br><i>Uses context node (.), here the same as current()</i></td>
+<td valign="top"><b>select="//book[author=./author]/title"</b><br><i>select the book who's author equals it's own author (every book)</i></td>
+<td valign="top"><b>select="//book[author=current()/author]/title"</b><br><i>select the book who's author equals the current node's author (what we probably want)</i></td>
+</tr>
+<tr>
+<td valign="top">Ralls, Kim</td>
+<td valign="top">Midnight Rain</td>
+<td valign="top">Midnight Rain<br>Maeve Ascendant<br>Oberon's Legacy<br></td>
+<td valign="top">Midnight Rain<br></td>
+</tr>
+<tr>
+<td valign="top">Corets, Eva</td>
+<td valign="top">Maeve Ascendant</td>
+<td valign="top">Midnight Rain<br>Maeve Ascendant<br>Oberon's Legacy<br></td>
+<td valign="top">Maeve Ascendant<br>Oberon's Legacy<br></td>
+</tr>
+<tr>
+<td valign="top">Corets, Eva</td>
+<td valign="top">Oberon's Legacy</td>
+<td valign="top">Midnight Rain<br>Maeve Ascendant<br>Oberon's Legacy<br></td>
+<td valign="top">Maeve Ascendant<br>Oberon's Legacy<br></td>
+</tr>
+</table>
+</body>
+</html>
